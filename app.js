@@ -2,6 +2,8 @@ var request = require("request");
 var cheerio = require("cheerio");
 var Q = require("q");
 
+/* --------------  ADDITIONS FROM DI ----------------- */
+
 //return an array of only the sentences with stats in them
 function getListOfSentences(text){
 	var unformattedList = text.split(".")
@@ -26,6 +28,14 @@ function getTextFromArticle(url){
     });
     return deferred.promise;	
 };
+
+//get an array of sentences with stats for an article at specified URL
+// getTextFromArticle("http://finance.yahoo.com/news/nordstrom-beats-2q-profit-forecasts-201556063.html").then(function(list){
+// 	console.log(list);
+// });
+
+/* --------------  END OF ADDITIONS ----------------- */
+
 
 var getTrendingTickers = function(url) {
 	var deferred = Q.defer();
@@ -147,8 +157,3 @@ getTrendingTickers(stockTwitsUrl).then(function(tickersArray) {
 		console.log(formattedStocks.length);
 	});
 });
-
-//get an array of sentences with stats for an article at specified URL
-// getTextFromArticle("http://finance.yahoo.com/news/nordstrom-beats-2q-profit-forecasts-201556063.html").then(function(list){
-// 	console.log(list);
-// });
