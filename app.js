@@ -67,12 +67,11 @@ function getListOfArticleSentences(listOfArticleLinks){
 
 //output all sentences with stats for each article on yahoo AP
 
-// var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
-var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
+// var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
 getListOfArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 
 	var topThreeRecent = listOfArticleLinks.slice(0, 3);
-	// console.log(topThreeRecent);
 	getListOfArticleSentences(topThreeRecent).then(function(listOfArticleSentences){
 		//console.log(listOfArticleSentences);
 		for(var i = 0; i < listOfArticleSentences.length; i++){
