@@ -40,15 +40,21 @@ function getListOfArticleLinks(url){
 		var baseUrl = url.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
 		switch(baseUrl) {
 		    case 'http://finance.yahoo.com/':
-		        link = baseUrl;
 		        classTarget = '.nothumb .txt a';
+		        break;
+		    case 'https://www.thestreet.com/':
+		        classTarget = '.news-ticker__headline .row .col-sm-9 a';
 		        break;
 		    case 'http://www.finviz.com/':
 		        classTarget = '.tab-link-news';
 		        break;
 		};
     	$(classTarget).each(function (index, element) {
-    		listOfLinks.push(link + $(element).attr('href'));
+    		if ($(element).attr('href').includes('.com')) {
+	    		listOfLinks.push($(element).attr('href'));
+    		} else {
+	    		listOfLinks.push(baseUrl.substring(0, baseUrl.length - 1) + $(element).attr('href'));
+    		}
 		});
 		deferred.resolve(listOfLinks);
     });
@@ -67,21 +73,23 @@ function getListOfArticleSentences(listOfArticleLinks){
 
 //output all sentences with stats for each article on yahoo AP
 
-var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
+// var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
+var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
 getListOfArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 
-	var topThreeRecent = listOfArticleLinks.slice(0, 3);
-	getListOfArticleSentences(topThreeRecent).then(function(listOfArticleSentences){
-		//console.log(listOfArticleSentences);
-		for(var i = 0; i < listOfArticleSentences.length; i++){
-			console.log("______________ Article " + (i + 1) + "________________");
-			var currentArticle = listOfArticleSentences[i];
-			console.log(currentArticle.join("\n\n"));
-			console.log("______________________END OF ARTICLE_______________________________");
-			console.log("\n");
-		};
-	});
+	var topFiveRecent = listOfArticleLinks.slice(0, 5);
+	console.log(topFiveRecent);
+// 	getListOfArticleSentences(topFiveRecent).then(function(listOfArticleSentences){
+// 		//console.log(listOfArticleSentences);
+// 		for(var i = 0; i < listOfArticleSentences.length; i++){
+// 			console.log("______________ Article " + (i + 1) + "________________");
+// 			var currentArticle = listOfArticleSentences[i];
+// 			console.log(currentArticle.join("\n\n"));
+// 			console.log("______________________END OF ARTICLE_______________________________");
+// 			console.log("\n");
+// 		};
+// 	});
 });
 
 //get an array of sentences with stats for an article at specified URL
