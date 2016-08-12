@@ -29,6 +29,46 @@ function getTextFromArticle(url){
     return deferred.promise;	
 };
 
+//get an array of links from the Yahoo AP front page
+function getListOfArticleLinks(url){
+	var deferred = Q.defer();
+	var listOfLinks = [];
+    request(url, function(err, res) {
+    	var $ = cheerio.load(res.body);
+    	$('.nothumb .txt a').each(function (index, element) {
+		  var link = "http://finance.yahoo.com" + $(element).attr('href');
+		  //console.log(link);
+		  listOfLinks.push(link);
+		});
+		deferred.resolve(listOfLinks);
+    });
+    return deferred.promise;	
+}
+
+//get an array of all sentences from each article
+function getListOfArticleSentences(listOfArticleLinks){
+	var listOfArticleSentences = [];
+	for(var i = 0; i < listOfArticleLinks.length; i++){
+		var listOfSentences = getTextFromArticle(listOfArticleLinks[i]);
+		listOfArticleSentences.push(listOfSentences);
+	};
+	return Q.all(listOfArticleSentences);
+};
+
+//output all sentences with stats for each article on yahoo AP
+// getListOfArticleLinks("http://finance.yahoo.com/news/provider-ap/?bypass=true").then(function(listOfArticleLinks){
+// 	getListOfArticleSentences(listOfArticleLinks).then(function(listOfArticleSentences){
+// 		//console.log(listOfArticleSentences);
+// 		for(var i = 0; i < listOfArticleSentences.length; i++){
+// 			console.log("______________ Article " + (i + 1) + "________________");
+// 			var currentArticle = listOfArticleSentences[i];
+// 			console.log(currentArticle.join("\n\n"));
+// 			console.log("______________________END OF ARTICLE_______________________________");
+// 			console.log("\n");
+// 		};
+// 	});
+// });
+
 //get an array of sentences with stats for an article at specified URL
 // getTextFromArticle("http://finance.yahoo.com/news/nordstrom-beats-2q-profit-forecasts-201556063.html").then(function(list){
 // 	console.log(list);
