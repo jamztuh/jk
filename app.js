@@ -2,6 +2,31 @@ var request = require("request");
 var cheerio = require("cheerio");
 var Q = require("q");
 
+//return an array of only the sentences with stats in them
+function getListOfSentences(text){
+	var unformattedList = text.split(".")
+	var formattedList = [];
+	for(var i = 0; i < unformattedList.length; i++){
+		var isMatch = unformattedList[i].match(/\d+|\%|\$/);	
+		if(isMatch != null){
+			formattedList.push(unformattedList[i]);
+		};	
+	};
+	return formattedList;
+};
+
+//get only the text from the article and pass it to the formatter
+function getTextFromArticle(url){
+	var deferred = Q.defer();
+    request(url, function(err, res) {
+    	var $ = cheerio.load(res.body);
+    	var unformattedText = $(".canvas-body").text()
+    	var formattedList = getListOfSentences(unformattedText);
+		deferred.resolve(formattedList);
+    });
+    return deferred.promise;	
+};
+
 var getTrendingTickers = function(url) {
 	var deferred = Q.defer();
     request(url, function(err, res) {
@@ -122,3 +147,8 @@ getTrendingTickers(stockTwitsUrl).then(function(tickersArray) {
 		console.log(formattedStocks.length);
 	});
 });
+
+//get an array of sentences with stats for an article at specified URL
+// getTextFromArticle("http://finance.yahoo.com/news/nordstrom-beats-2q-profit-forecasts-201556063.html").then(function(list){
+// 	console.log(list);
+// });
