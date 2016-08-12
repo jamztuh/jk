@@ -29,20 +29,30 @@ function getTextFromArticle(url){
     return deferred.promise;	
 };
 
-//get an array of links from the Yahoo AP front page
+//get an array of links from any news source
 function getListOfArticleLinks(url){
 	var deferred = Q.defer();
-	var listOfLinks = [];
     request(url, function(err, res) {
     	var $ = cheerio.load(res.body);
-    	$('.nothumb .txt a').each(function (index, element) {
-		  var link = "http://finance.yahoo.com" + $(element).attr('href');
-		  //console.log(link);
-		  listOfLinks.push(link);
+		var listOfLinks = [];
+		var link = "";
+		var classTarget;
+		var baseUrl = url.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
+		switch(baseUrl) {
+		    case 'http://finance.yahoo.com/':
+		        link = baseUrl;
+		        classTarget = '.nothumb .txt a';
+		        break;
+		    case 'http://www.finviz.com/':
+		        classTarget = '.tab-link-news';
+		        break;
+		};
+    	$(classTarget).each(function (index, element) {
+    		listOfLinks.push(link + $(element).attr('href'));
 		});
 		deferred.resolve(listOfLinks);
     });
-    return deferred.promise;	
+    return deferred.promise;
 }
 
 //get an array of all sentences from each article
@@ -56,18 +66,24 @@ function getListOfArticleSentences(listOfArticleLinks){
 };
 
 //output all sentences with stats for each article on yahoo AP
-// getListOfArticleLinks("http://finance.yahoo.com/news/provider-ap/?bypass=true").then(function(listOfArticleLinks){
-// 	getListOfArticleSentences(listOfArticleLinks).then(function(listOfArticleSentences){
-// 		//console.log(listOfArticleSentences);
-// 		for(var i = 0; i < listOfArticleSentences.length; i++){
-// 			console.log("______________ Article " + (i + 1) + "________________");
-// 			var currentArticle = listOfArticleSentences[i];
-// 			console.log(currentArticle.join("\n\n"));
-// 			console.log("______________________END OF ARTICLE_______________________________");
-// 			console.log("\n");
-// 		};
-// 	});
-// });
+
+// var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
+var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+getListOfArticleLinks(sourceUrl).then(function(listOfArticleLinks){
+
+	var topThreeRecent = listOfArticleLinks.slice(0, 3);
+	// console.log(topThreeRecent);
+	getListOfArticleSentences(topThreeRecent).then(function(listOfArticleSentences){
+		//console.log(listOfArticleSentences);
+		for(var i = 0; i < listOfArticleSentences.length; i++){
+			console.log("______________ Article " + (i + 1) + "________________");
+			var currentArticle = listOfArticleSentences[i];
+			console.log(currentArticle.join("\n\n"));
+			console.log("______________________END OF ARTICLE_______________________________");
+			console.log("\n");
+		};
+	});
+});
 
 //get an array of sentences with stats for an article at specified URL
 // getTextFromArticle("http://finance.yahoo.com/news/nordstrom-beats-2q-profit-forecasts-201556063.html").then(function(list){
@@ -183,17 +199,17 @@ var formatStocks = function(googleArray, yahooArray) {
 	return stocks;
 }
 
-var stockTwitsUrl = "http://stocktwits.com/";
-getTrendingTickers(stockTwitsUrl).then(function(tickersArray) {
-	googleYahooRequests(tickersArray).then(function(googleYahooArray) {
+// var stockTwitsUrl = "http://stocktwits.com/";
+// getTrendingTickers(stockTwitsUrl).then(function(tickersArray) {
+// 	googleYahooRequests(tickersArray).then(function(googleYahooArray) {
 
-		var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
+// 		var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
 
-		formattedStocks.sort(function(a, b) {
-		    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
-		}).reverse();
+// 		formattedStocks.sort(function(a, b) {
+// 		    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
+// 		}).reverse();
 
-		console.log(formattedStocks);
-		console.log(formattedStocks.length);
-	});
-});
+// 		console.log(formattedStocks);
+// 		console.log(formattedStocks.length);
+// 	});
+// });
