@@ -32,6 +32,11 @@ function getArticle(url){
 		        titleTarget = '.canvas-header';
 		        contentTarget = '.canvas-body';
 		        break;
+		    case 'http://247wallst.com/':
+		        dateTarget = '.timestamp';
+		        titleTarget = '.entry-title';
+		        contentTarget = '.entry-content';
+		        break;
 		    case 'https://www.thestreet.com/':
 		        dateTarget = '.article__publish-date.article__byline-item time';
 		        titleTarget = '.article__headline';
@@ -41,11 +46,6 @@ function getArticle(url){
 		        dateTarget = 'time.timestamp';
 		        titleTarget = '.wsj-article-headline';
 		        contentTarget = '.wsj-snippet-body';
-		        break;
-		    case 'http://247wallst.com/':
-		        dateTarget = '.timestamp';
-		        titleTarget = '.entry-title';
-		        contentTarget = '.entry-content';
 		        break;
 		    case 'http://realmoney.thestreet.com/':
 		        dateTarget = '.details .date';
@@ -88,14 +88,17 @@ function getArticleLinks(url){
 		    case 'http://finance.yahoo.com/':
 		        classTarget = '.nothumb .txt a';
 		        break;
+		    case 'http://247wallst.com/':
+		        classTarget = '.hentry .entry-title a'
+		        break;
 		    case 'https://www.thestreet.com/':
 		        classTarget = '.news-ticker__headline .row .col-sm-9 a';
 		        break;
+		    case 'http://stream.wsj.com/':
+		        classTarget = '.sSubType-article a.stri-viewSec'
+		        break;
 		    case 'http://www.finviz.com/':
 		        classTarget = '.tab-link-news';
-		        break;
-		    case 'http://247wallst.com/':
-		        classTarget = '.hentry .entry-title a'
 		        break;
 		};
     	$(classTarget).each(function (index, element) {
@@ -122,10 +125,11 @@ function getListOfArticleSentences(listOfArticleLinks){
 
 //output all sentences with stats for each article on yahoo AP
 
-var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
-// var sourceUrl = "https://www.thestreet.com/latest-news";
-// var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+// var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
 // var sourceUrl = "http://247wallst.com/";
+// var sourceUrl = "https://www.thestreet.com/latest-news";
+var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
+// var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
 getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 	var topThreeRecent = listOfArticleLinks.splice(0, 3);
 	// console.log(topThreeRecent);
