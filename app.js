@@ -62,6 +62,11 @@ function getArticle(url){
 		        titleTarget = '.headline h2';
 		        contentTarget = '.article .content';
 		        break;
+		    case 'http://www.fool.com/':
+		        dateTarget = '.publication-date';
+		        titleTarget = '.usmf-new.article-header header h1';
+		        contentTarget = '.usmf-new.article-body .article-content';
+		        break;
 		};
 
 		// Upper case, remove .'s, remove &nbps;'s, remove |'s, convert to EDT, and trim trailing white space for date format to work
@@ -116,6 +121,9 @@ function getArticleLinks(url){
 		    case 'http://www.marketwatch.com/':
 		        classTarget = '.nv-text-cont h4 a.read-more';
 		        break;
+		    case 'http://www.fool.com/':
+		        classTarget = '#recent-article-hl';
+		        break;
 		};
     	$(classTarget).each(function (index, element) {
     		if ($(element).attr('href').includes('.com')) {
@@ -146,8 +154,9 @@ function getListOfArticleSentences(listOfArticleLinks){
 // var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
 // var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
-// var sourceUrl = "http://www.businesswire.com/portal/site/home/news/"
-var sourceUrl = "http://www.marketwatch.com/newsviewer"
+// var sourceUrl = "http://www.businesswire.com/portal/site/home/news/";
+// var sourceUrl = "http://www.marketwatch.com/newsviewer";
+var sourceUrl = "http://www.fool.com/investing-news/";
 getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 	var topThreeRecent = listOfArticleLinks.splice(0, 3);
 	// console.log(topThreeRecent);
