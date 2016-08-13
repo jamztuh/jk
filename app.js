@@ -42,6 +42,11 @@ function getArticle(url){
 		        titleTarget = '.wsj-article-headline';
 		        contentTarget = '.wsj-snippet-body';
 		        break;
+		    case 'http://247wallst.com/':
+		        dateTarget = '.timestamp';
+		        titleTarget = '.entry-title';
+		        contentTarget = '.entry-content';
+		        break;
 		    case 'http://realmoney.thestreet.com/':
 		        dateTarget = '.details .date';
 		        titleTarget = '.headline h2';
@@ -89,6 +94,9 @@ function getArticleLinks(url){
 		    case 'http://www.finviz.com/':
 		        classTarget = '.tab-link-news';
 		        break;
+		    case 'http://247wallst.com/':
+		        classTarget = '.hentry .entry-title a'
+		        break;
 		};
     	$(classTarget).each(function (index, element) {
     		if ($(element).attr('href').includes('.com')) {
@@ -114,11 +122,13 @@ function getListOfArticleSentences(listOfArticleLinks){
 
 //output all sentences with stats for each article on yahoo AP
 
-// var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
-var sourceUrl = "https://www.thestreet.com/latest-news";
+var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
+// var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+// var sourceUrl = "http://247wallst.com/";
 getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
-	var topThreeRecent = listOfArticleLinks.slice(0, 3);
+	var topThreeRecent = listOfArticleLinks.splice(0, 3);
+	// console.log(topThreeRecent);
 	getListOfArticleSentences(topThreeRecent).then(function(listOfArticle){
 		for(var i = 0; i < listOfArticle.length; i++){
 			console.log('Url: ', listOfArticle[i].url);
@@ -134,6 +144,7 @@ getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 // var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
 // var articleUrl = "https://www.thestreet.com/story/13674322/1/amazon-remains-intent-on-staying-ahead-of-hungry-cloud-rivals.html";
 // var articleUrl = "http://www.wsj.com/articles/where-we-spending-is-unending-traditional-retail-1471041884?ru=yahoo?mod=yahoo_itp";
+// var articleUrl = "http://247wallst.com/services/2016/08/12/what-analysts-are-saying-after-alibaba-reported-earnings/"
 // var articleUrl = "http://realmoney.thestreet.com/articles/08/12/2016/july-retail-sales-are-good-sign-amazon";
 // getArticle(articleUrl).then(function(statSentencesArray){
 // 	console.log(statSentencesArray);
