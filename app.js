@@ -52,6 +52,11 @@ function getArticle(url){
 		        titleTarget = 'h1.epi-fontLg';
 		        contentTarget = '.bw-release-story';
 		        break;
+		    case 'http://www.marketwatch.com/':
+		        dateTarget = '#published-timestamp span';
+		        titleTarget = '#article-headline';
+		        contentTarget = '#article-body';
+		        break;
 		    case 'http://realmoney.thestreet.com/':
 		        dateTarget = '.details .date';
 		        titleTarget = '.headline h2';
@@ -108,6 +113,9 @@ function getArticleLinks(url){
 		    case 'http://www.businesswire.com/':
 		        classTarget = 'a.bwTitleLink';
 		        break;
+		    case 'http://www.marketwatch.com/':
+		        classTarget = '.nv-text-cont h4 a.read-more';
+		        break;
 		};
     	$(classTarget).each(function (index, element) {
     		if ($(element).attr('href').includes('.com')) {
@@ -138,7 +146,8 @@ function getListOfArticleSentences(listOfArticleLinks){
 // var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
 // var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
-var sourceUrl = "http://www.businesswire.com/portal/site/home/news/"
+// var sourceUrl = "http://www.businesswire.com/portal/site/home/news/"
+var sourceUrl = "http://www.marketwatch.com/newsviewer"
 getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 	var topThreeRecent = listOfArticleLinks.splice(0, 3);
 	// console.log(topThreeRecent);
@@ -158,6 +167,7 @@ getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 // var articleUrl = "https://www.thestreet.com/story/13674322/1/amazon-remains-intent-on-staying-ahead-of-hungry-cloud-rivals.html";
 // var articleUrl = "http://www.wsj.com/articles/where-we-spending-is-unending-traditional-retail-1471041884?ru=yahoo?mod=yahoo_itp";
 // var articleUrl = "http://247wallst.com/services/2016/08/12/what-analysts-are-saying-after-alibaba-reported-earnings/"
+// var articleUrl = "http://www.marketwatch.com/story/full-house-home-in-san-francisco-on-the-market-for-415-million-2016-06-01?siteid=yhoof2";
 // var articleUrl = "http://realmoney.thestreet.com/articles/08/12/2016/july-retail-sales-are-good-sign-amazon";
 // getArticle(articleUrl).then(function(statSentencesArray){
 // 	console.log(statSentencesArray);
