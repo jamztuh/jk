@@ -47,6 +47,11 @@ function getArticle(url){
 		        titleTarget = '.wsj-article-headline';
 		        contentTarget = '.wsj-snippet-body';
 		        break;
+		    case 'http://www.businesswire.com/':
+		        dateTarget = '.bw-release-timestamp time';
+		        titleTarget = 'h1.epi-fontLg';
+		        contentTarget = '.bw-release-story';
+		        break;
 		    case 'http://realmoney.thestreet.com/':
 		        dateTarget = '.details .date';
 		        titleTarget = '.headline h2';
@@ -54,8 +59,8 @@ function getArticle(url){
 		        break;
 		};
 
-		// Upper case, remove .'s, remove &nbps;'s, remove |'s, convert ET to EDT, and trim trailing white space for date format to work
-		var articleDate = $(dateTarget).text().toUpperCase().replace(/\./g,'').replace(/\u00a0/g, " ").replace(/\|/g,'').replace('ET', "EDT").trim();
+		// Upper case, remove .'s, remove &nbps;'s, remove |'s, convert to EDT, and trim trailing white space for date format to work
+		var articleDate = $(dateTarget).text().toUpperCase().replace(/\./g,'').replace(/\u00a0/g, " ").replace(/\|/g,'').replace('ET', 'EDT').replace('EASTERN DAYLIGHT TIME', 'EDT').trim();
 		// console.log('Date: ', articleDate);
 		var articleTitle = $(titleTarget).text();
 		// console.log('Title: ', articleTitle);
@@ -100,6 +105,9 @@ function getArticleLinks(url){
 		    case 'http://www.finviz.com/':
 		        classTarget = '.tab-link-news';
 		        break;
+		    case 'http://www.businesswire.com/':
+		        classTarget = 'a.bwTitleLink';
+		        break;
 		};
     	$(classTarget).each(function (index, element) {
     		if ($(element).attr('href').includes('.com')) {
@@ -128,8 +136,9 @@ function getListOfArticleSentences(listOfArticleLinks){
 // var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
 // var sourceUrl = "http://247wallst.com/";
 // var sourceUrl = "https://www.thestreet.com/latest-news";
-var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
+// var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
 // var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+var sourceUrl = "http://www.businesswire.com/portal/site/home/news/"
 getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 	var topThreeRecent = listOfArticleLinks.splice(0, 3);
 	// console.log(topThreeRecent);
