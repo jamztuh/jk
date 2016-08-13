@@ -5,7 +5,7 @@ var Q = require("q");
 /* --------------  ADDITIONS FROM DI ----------------- */
 
 //return an array of only the sentences with stats in them
-function getListOfSentences(text){
+function getStatSentences(text){
 	var unformattedList = text.split(".")
 	var formattedList = [];
 	for(var i = 0; i < unformattedList.length; i++){
@@ -18,36 +18,60 @@ function getListOfSentences(text){
 };
 
 //get only the text from the article and pass it to the formatter
-function getTextFromArticle(url){
+function getArticle(url){
 	var deferred = Q.defer();
     request(url, function(err, res) {
     	var $ = cheerio.load(res.body);
 		var baseUrl = url.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
 		var dateTarget;
+		var titleTarget;
+		var contentTarget;
 		switch(baseUrl) {
 		    case 'http://finance.yahoo.com/':
 		        dateTarget = '.date';
+		        titleTarget = '.canvas-header';
+		        contentTarget = '.canvas-body';
 		        break;
 		    case 'https://www.thestreet.com/':
 		        dateTarget = '.article__publish-date.article__byline-item time';
+		        titleTarget = '.article__headline';
+		        contentTarget = '.article__body';
 		        break;
 		    case 'http://www.wsj.com/':
 		        dateTarget = 'time.timestamp';
+		        titleTarget = '.wsj-article-headline';
+		        contentTarget = '.wsj-snippet-body';
+		        break;
+		    case 'http://realmoney.thestreet.com/':
+		        dateTarget = '.details .date';
+		        titleTarget = '.headline h2';
+		        contentTarget = '.article .content';
 		        break;
 		};
 
-		// Remove periods, upper case all letters, convert ET to EDT for date format to work
-		var articleDate = new Date($(dateTarget).text().toUpperCase().replace(/\./g,'').replace('ET', "EDT"));
-		console.log(articleDate);
-    	// var unformattedText = $(".canvas-body").text()
-    	// var formattedList = getListOfSentences(unformattedText);
-		// deferred.resolve(formattedList);
+		// Upper case, remove .'s, remove &nbps;'s, remove |'s, convert ET to EDT, and trim trailing white space for date format to work
+		var articleDate = $(dateTarget).text().toUpperCase().replace(/\./g,'').replace(/\u00a0/g, " ").replace(/\|/g,'').replace('ET', "EDT").trim();
+		// console.log('Date: ', articleDate);
+		var articleTitle = $(titleTarget).text();
+		// console.log('Title: ', articleTitle);
+		var articleContent = $(contentTarget).text();
+		// console.log('Content: ', articleContent);
+    	var statSentences = getStatSentences(articleContent);
+    	// console.log(statSentences);
+		var article = {
+			url: url,
+			title: articleTitle,
+			date: articleDate,
+			content: articleContent,
+			statSentences: getStatSentences(articleContent)
+		};
+		deferred.resolve(article);
     });
     return deferred.promise;	
 };
 
 //get an array of links from any news source
-function getListOfArticleLinks(url){
+function getArticleLinks(url){
 	var deferred = Q.defer();
     request(url, function(err, res) {
     	var $ = cheerio.load(res.body);
@@ -82,7 +106,7 @@ function getListOfArticleLinks(url){
 function getListOfArticleSentences(listOfArticleLinks){
 	var listOfArticleSentences = [];
 	for(var i = 0; i < listOfArticleLinks.length; i++){
-		var listOfSentences = getTextFromArticle(listOfArticleLinks[i]);
+		var listOfSentences = getArticle(listOfArticleLinks[i]);
 		listOfArticleSentences.push(listOfSentences);
 	};
 	return Q.all(listOfArticleSentences);
@@ -93,29 +117,27 @@ function getListOfArticleSentences(listOfArticleLinks){
 // var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
 var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
-// getListOfArticleLinks(sourceUrl).then(function(listOfArticleLinks){
-
-// 	var topFiveRecent = listOfArticleLinks.slice(0, 5);
-// 	console.log(topFiveRecent);
-// 	getListOfArticleSentences(topFiveRecent).then(function(listOfArticleSentences){
-// 		//console.log(listOfArticleSentences);
-// 		for(var i = 0; i < listOfArticleSentences.length; i++){
-// 			console.log("______________ Article " + (i + 1) + "________________");
-// 			var currentArticle = listOfArticleSentences[i];
-// 			console.log(currentArticle.join("\n\n"));
-// 			console.log("______________________END OF ARTICLE_______________________________");
-// 			console.log("\n");
-// 		};
-// 	});
-// });
+getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
+	var topThreeRecent = listOfArticleLinks.slice(0, 3);
+	getListOfArticleSentences(topThreeRecent).then(function(listOfArticle){
+		for(var i = 0; i < listOfArticle.length; i++){
+			console.log('Url: ', listOfArticle[i].url);
+			console.log('Title: ', listOfArticle[i].title);
+			console.log('Date: ', listOfArticle[i].date);
+			// console.log('Content: ', listOfArticle[i].content);
+			console.log('Stat Sentences: ', listOfArticle[i].statSentences);
+		};
+	});
+});
 
 //get an array of sentences with stats for an article at specified URL
-var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
+// var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
 // var articleUrl = "https://www.thestreet.com/story/13674322/1/amazon-remains-intent-on-staying-ahead-of-hungry-cloud-rivals.html";
 // var articleUrl = "http://www.wsj.com/articles/where-we-spending-is-unending-traditional-retail-1471041884?ru=yahoo?mod=yahoo_itp";
-getTextFromArticle(articleUrl).then(function(list){
-	console.log(list);
-});
+// var articleUrl = "http://realmoney.thestreet.com/articles/08/12/2016/july-retail-sales-are-good-sign-amazon";
+// getArticle(articleUrl).then(function(statSentencesArray){
+// 	console.log(statSentencesArray);
+// });
 
 /* --------------  END OF ADDITIONS ----------------- */
 
