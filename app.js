@@ -22,9 +22,26 @@ function getTextFromArticle(url){
 	var deferred = Q.defer();
     request(url, function(err, res) {
     	var $ = cheerio.load(res.body);
-    	var unformattedText = $(".canvas-body").text()
-    	var formattedList = getListOfSentences(unformattedText);
-		deferred.resolve(formattedList);
+		var baseUrl = url.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
+		var dateTarget;
+		switch(baseUrl) {
+		    case 'http://finance.yahoo.com/':
+		        dateTarget = '.date';
+		        break;
+		    case 'https://www.thestreet.com/':
+		        dateTarget = '.article__publish-date.article__byline-item time';
+		        break;
+		    case 'http://www.wsj.com/':
+		        dateTarget = 'time.timestamp';
+		        break;
+		};
+
+		// Remove periods, upper case all letters, convert ET to EDT for date format to work
+		var articleDate = new Date($(dateTarget).text().toUpperCase().replace(/\./g,'').replace('ET', "EDT"));
+		console.log(articleDate);
+    	// var unformattedText = $(".canvas-body").text()
+    	// var formattedList = getListOfSentences(unformattedText);
+		// deferred.resolve(formattedList);
     });
     return deferred.promise;	
 };
@@ -76,10 +93,10 @@ function getListOfArticleSentences(listOfArticleLinks){
 // var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
 var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
-getListOfArticleLinks(sourceUrl).then(function(listOfArticleLinks){
+// getListOfArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 
-	var topFiveRecent = listOfArticleLinks.slice(0, 5);
-	console.log(topFiveRecent);
+// 	var topFiveRecent = listOfArticleLinks.slice(0, 5);
+// 	console.log(topFiveRecent);
 // 	getListOfArticleSentences(topFiveRecent).then(function(listOfArticleSentences){
 // 		//console.log(listOfArticleSentences);
 // 		for(var i = 0; i < listOfArticleSentences.length; i++){
@@ -90,12 +107,15 @@ getListOfArticleLinks(sourceUrl).then(function(listOfArticleLinks){
 // 			console.log("\n");
 // 		};
 // 	});
-});
+// });
 
 //get an array of sentences with stats for an article at specified URL
-// getTextFromArticle("http://finance.yahoo.com/news/nordstrom-beats-2q-profit-forecasts-201556063.html").then(function(list){
-// 	console.log(list);
-// });
+var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
+// var articleUrl = "https://www.thestreet.com/story/13674322/1/amazon-remains-intent-on-staying-ahead-of-hungry-cloud-rivals.html";
+// var articleUrl = "http://www.wsj.com/articles/where-we-spending-is-unending-traditional-retail-1471041884?ru=yahoo?mod=yahoo_itp";
+getTextFromArticle(articleUrl).then(function(list){
+	console.log(list);
+});
 
 /* --------------  END OF ADDITIONS ----------------- */
 
