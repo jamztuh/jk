@@ -294,17 +294,22 @@ var formatStocks = function(googleArray, yahooArray) {
 	return stocks;
 }
 
-// var stockTwitsUrl = "http://stocktwits.com/";
-// getTrendingTickers(stockTwitsUrl).then(function(tickersArray) {
-// 	googleYahooRequests(tickersArray).then(function(googleYahooArray) {
+var printTrendingStocks = function(stocksUrl) {
+	getTrendingTickers(stocksUrl).then(function(tickersArray) {
+		googleYahooRequests(tickersArray).then(function(googleYahooArray) {
 
-// 		var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
+			var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
 
-// 		formattedStocks.sort(function(a, b) {
-// 		    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
-// 		}).reverse();
+			formattedStocks.sort(function(a, b) {
+			    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
+			}).reverse();
 
-// 		console.log(formattedStocks);
-// 		console.log(formattedStocks.length);
-// 	});
-// });
+			console.log(formattedStocks);
+			console.log(formattedStocks.length);
+		});
+	});
+}
+
+var stocksUrl = "http://stocktwits.com/";
+printTrendingStocks(stocksUrl);
+
