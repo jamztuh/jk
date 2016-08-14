@@ -5,7 +5,7 @@ var Q = require("q");
 /* --------------  ADDITIONS FROM DI ----------------- */
 
 //return an array of only the sentences with stats in them
-function getStatSentences(text){
+var getStatSentences = function(text){
 	var unformattedList = text.split(".")
 	var formattedList = [];
 	for(var i = 0; i < unformattedList.length; i++){
@@ -18,7 +18,7 @@ function getStatSentences(text){
 };
 
 //get only the text from the article and pass it to the formatter
-function getArticle(url){
+var getArticle = function(url){
 	var deferred = Q.defer();
     request(url, function(err, res) {
     	var $ = cheerio.load(res.body);
@@ -91,7 +91,7 @@ function getArticle(url){
 };
 
 //get an array of links from any news source
-function getArticleLinks(url){
+var getArticleLinks = function(url){
 	var deferred = Q.defer();
     request(url, function(err, res) {
     	var $ = cheerio.load(res.body);
@@ -138,7 +138,7 @@ function getArticleLinks(url){
 }
 
 //get an array of all sentences from each article
-function getListOfArticleSentences(listOfArticleLinks){
+var getListOfArticleSentences = function(listOfArticleLinks){
 	var listOfArticleSentences = [];
 	for(var i = 0; i < listOfArticleLinks.length; i++){
 		var listOfSentences = getArticle(listOfArticleLinks[i]);
@@ -148,6 +148,21 @@ function getListOfArticleSentences(listOfArticleLinks){
 };
 
 //output all sentences with stats for each article on yahoo AP
+var printArticles = function(sourceUrl) {
+	getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
+		var topThreeRecent = listOfArticleLinks.splice(0, 3);
+		// console.log(topThreeRecent);
+		getListOfArticleSentences(topThreeRecent).then(function(listOfArticle){
+			for(var i = 0; i < listOfArticle.length; i++){
+				console.log('Url: ', listOfArticle[i].url);
+				console.log('Title: ', listOfArticle[i].title);
+				console.log('Date: ', listOfArticle[i].date);
+				// console.log('Content: ', listOfArticle[i].content);
+				console.log('Stat Sentences: ', listOfArticle[i].statSentences);
+			};
+		});
+	});
+};
 
 // var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
 // var sourceUrl = "http://247wallst.com/";
@@ -157,19 +172,7 @@ function getListOfArticleSentences(listOfArticleLinks){
 // var sourceUrl = "http://www.businesswire.com/portal/site/home/news/";
 // var sourceUrl = "http://www.marketwatch.com/newsviewer";
 var sourceUrl = "http://www.fool.com/investing-news/";
-getArticleLinks(sourceUrl).then(function(listOfArticleLinks){
-	var topThreeRecent = listOfArticleLinks.splice(0, 3);
-	// console.log(topThreeRecent);
-	getListOfArticleSentences(topThreeRecent).then(function(listOfArticle){
-		for(var i = 0; i < listOfArticle.length; i++){
-			console.log('Url: ', listOfArticle[i].url);
-			console.log('Title: ', listOfArticle[i].title);
-			console.log('Date: ', listOfArticle[i].date);
-			// console.log('Content: ', listOfArticle[i].content);
-			console.log('Stat Sentences: ', listOfArticle[i].statSentences);
-		};
-	});
-});
+// printArticles(sourceUrl);
 
 //get an array of sentences with stats for an article at specified URL
 // var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
