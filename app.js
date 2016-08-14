@@ -3,49 +3,97 @@ var cheerio = require("cheerio");
 var Q = require("q");
 
 
-//get an array of links from any news source
-var getArticleLinks = function(source){
+/* News Information */
+
+// Return array of objects with dates and links
+var getArticlesWithDatesAndLinks = function(source){
+
 	var deferred = Q.defer();
+
     request(source, function(err, res) {
     	var $ = cheerio.load(res.body);
-		var listOfLinks = [];
-		var link = "";
+		var articlesWithDatesAndLinks = [];
+		var parentTarget;
 		var classTarget;
 		var baseUrl = source.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
+
 		switch(baseUrl) {
 		    case 'http://finance.yahoo.com/':
-		        classTarget = '.nothumb .txt a';
+		    	parentTarget = '.nothumb.clearfix .content .txt';
+		    	dateTimeTarget = 'cite';
+		        linkTarget = 'a';
 		        break;
 		    case 'http://247wallst.com/':
-		        classTarget = '.hentry .entry-title a'
+		    	parentTarget = '.hentry .short_excerpt';
+		    	dateTimeTarget = ".post-meta";
+		        linkTarget = 'a';
 		        break;
 		    case 'https://www.thestreet.com/':
-		        classTarget = '.news-ticker__headline .row .col-sm-9 a';
+		    	parentTarget = '.news-ticker__headline .row .col-sm-9';
+		    	dateTimeTarget = "a .news-ticker__headline-trunc time.news-ticker__publish-date";
+		        linkTarget = 'a';
 		        break;
 		    case 'http://stream.wsj.com/':
-		        classTarget = '.sSubType-article a.stri-viewSec'
+		    	parentTarget = '.sSubType-article';
+		    	dateTimeTarget = "span.stri-time"; // not working
+		        linkTarget = 'a.stri-viewSec'
 		        break;
 		    case 'http://www.finviz.com/':
-		        classTarget = '.tab-link-news';
+		    	parentTarget = '.fullview-news-outer tr';
+		    	dateTimeTarget = "td[align='right']";
+		        linkTarget = '.tab-link-news';
 		        break;
 		    case 'http://www.businesswire.com/':
-		        classTarget = 'a.bwTitleLink';
+		    	parentTarget = 'ul.bwNewsList li';
+		    	dateTimeTarget = "div.bwMeta .bwTimestamp time";
+		        linkTarget = 'a.bwTitleLink';
 		        break;
 		    case 'http://www.marketwatch.com/':
-		        classTarget = '.nv-text-cont h4 a.read-more';
+		    	parentTarget = 'ol.viewport li';
+		    	dateTimeTarget = "span.nv-time";
+		        linkTarget = '.nv-text-cont h4 a.read-more';
 		        break;
 		    case 'http://www.fool.com/':
-		        classTarget = '#recent-article-hl';
+		    	parentTarget = 'div.list-content div.comment';
+		    	dateTimeTarget = "p.author-byline";
+		        linkTarget = '.nv-text-cont h4 a.read-more';
+		        linkTarget = 'div.comment-content a#recent-article-hl';
 		        break;
 		};
-    	$(classTarget).each(function (index, element) {
-    		if ($(element).attr('href').includes('.com')) {
-	    		listOfLinks.push($(element).attr('href'));
-    		} else {
-	    		listOfLinks.push(baseUrl.substring(0, baseUrl.length - 1) + $(element).attr('href'));
-    		}
+
+		var currentDate;
+
+		// Find the parent that contains children of date and url from the source
+    	$(parentTarget).each(function (index, element) {
+
+    		var link = $(element).find(linkTarget).attr('href');
+
+    		// Add base url if needed
+    		if (link.includes('.com') === false) {
+    			link = baseUrl.substring(0, baseUrl.length - 1) + link;
+    		};
+
+    		var dateTime = $(element).find(dateTimeTarget).text();
+
+    		if (baseUrl === 'http://www.finviz.com/') {
+	    		// Add current date if needed
+	    		if (dateTime.indexOf(' ') >= 0) {
+	    			currentDate = dateTime.split(/\s/)[0];
+	    		} else {
+	    			dateTime = currentDate + ' ' + dateTime;
+	    		};
+    		};
+
+    		var article = {};
+
+    		article.link = link.trim();
+    		article.thirdSourceDate = dateTime.trim();
+
+			articlesWithDatesAndLinks.push(article);
+
 		});
-		deferred.resolve(listOfLinks);
+
+		deferred.resolve(articlesWithDatesAndLinks);
     });
     return deferred.promise;
 };
@@ -62,11 +110,11 @@ var getStatSentences = function(rawText) {
 	return formattedList;
 };
 
-var getArticle = function(link){
+var getArticle = function(article) {
+	var baseUrl = article.link.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
 	var deferred = Q.defer();
-    request(link, function(err, res) {
+    request(article.link, function(err, res) {
     	var $ = cheerio.load(res.body);
-		var baseUrl = link.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
 		var dateTarget;
 		var titleTarget;
 		var contentTarget;
@@ -113,17 +161,13 @@ var getArticle = function(link){
 		        break;
 		};
 
-
-		var article = {};
-
-		article.link = link;
 		// Upper case, remove .'s, remove &nbps;'s, remove |'s, convert to EDT, and trim trailing white space for date format to work
 		article.date = $(dateTarget).text().toUpperCase().replace(/\./g,'').replace(/\u00a0/g, " ").replace(/\|/g,'').replace('ET', 'EDT').replace('EASTERN DAYLIGHT TIME', 'EDT').trim();
 		// console.log('Date: ', article.date);
 		article.title = $(titleTarget).text();
 		// console.log('Title: ', article.title);
 		article.rawText = $(contentTarget).text();
-		// console.log('Content: ', article.rawText);
+		// console.log('Raw Text: ', article.rawText);
 		article.statSentences = getStatSentences(article.rawText);
     	// console.log(article.statSentences);
 
@@ -132,38 +176,46 @@ var getArticle = function(link){
     return deferred.promise;	
 };
 
-//get an array of articles
-var getArticles = function(links){
+var getArticles = function(topRecentArticles) {
 	var articles = [];
-	for(var i = 0; i < links.length; i++){
-		var article = getArticle(links[i]);
+	for(var i = 0; i < topRecentArticles.length; i++){
+		var article = getArticle(topRecentArticles[i]);
+
 		articles.push(article);
+
 	};
+
 	return Q.all(articles);
 };
 
-//output all sentences with stats for each article on yahoo AP
 var prinRecentArticles = function(sourceUrl, numberOfRecentLinks) {
-	getArticleLinks(sourceUrl).then(function(links){
-		var topRecentLinks = links.splice(0, numberOfRecentLinks);
-		// console.log(topRecentLinks);
-		getArticles(topRecentLinks).then(function(recentArticles){
+	getArticlesWithDatesAndLinks(sourceUrl).then(function(articlesWithDatesAndLinks) {
+
+		// Split if there is a second parameter, otherwise keep all links
+		if (numberOfRecentLinks) {
+			articlesWithDatesAndLinks = articlesWithDatesAndLinks.splice(0, numberOfRecentLinks);
+		};
+
+		// console.log(articlesWithDatesAndLinks);
+		getArticles(articlesWithDatesAndLinks).then(function(recentArticles){
 			for(var i = 0; i < recentArticles.length; i++){
 				console.log('Link: ', recentArticles[i].link);
-				console.log('Title: ', recentArticles[i].title);
+				console.log('Third Source Date: ', recentArticles[i].thirdSourceDate);
 				console.log('Date: ', recentArticles[i].date);
-				// console.log('Content: ', recentArticles[i].content);
+				console.log('Title: ', recentArticles[i].title);
+				// console.log('Raw Text: ', recentArticles[i].rawText);
 				console.log('Stat Sentences: ', recentArticles[i].statSentences);
 			};
+			console.log('Number of Articles Scraped: ', recentArticles.length);
 		});
 	});
 };
 
 // var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
 // var sourceUrl = "http://247wallst.com/";
-// var sourceUrl = "https://www.thestreet.com/latest-news";
+var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
-var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+// var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
 // var sourceUrl = "http://www.businesswire.com/portal/site/home/news/";
 // var sourceUrl = "http://www.marketwatch.com/newsviewer";
 // var sourceUrl = "http://www.fool.com/investing-news/";
@@ -180,8 +232,11 @@ prinRecentArticles(sourceUrl, 3);
 // 	console.log(statSentencesArray);
 // });
 
-/* --------------  END OF ADDITIONS ----------------- */
 
+
+
+
+/* Google Finance and Yahoo Finance Ticker Information */
 
 var getTickers = function(url) {
 	var deferred = Q.defer();
