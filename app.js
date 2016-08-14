@@ -168,11 +168,11 @@ var printArticles = function(sourceUrl) {
 // var sourceUrl = "http://247wallst.com/";
 // var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
-// var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
 // var sourceUrl = "http://www.businesswire.com/portal/site/home/news/";
 // var sourceUrl = "http://www.marketwatch.com/newsviewer";
-var sourceUrl = "http://www.fool.com/investing-news/";
-// printArticles(sourceUrl);
+// var sourceUrl = "http://www.fool.com/investing-news/";
+printArticles(sourceUrl);
 
 //get an array of sentences with stats for an article at specified URL
 // var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
@@ -311,5 +311,5 @@ var printTrendingStocks = function(stocksUrl) {
 }
 
 var stocksUrl = "http://stocktwits.com/";
-printTrendingStocks(stocksUrl);
+// printTrendingStocks(stocksUrl);
 
