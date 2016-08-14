@@ -234,13 +234,8 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 
 		var today = new Date();
 		var timeDiff = today.getTime() - PST.getTime();
-		// console.log(today);
-		// console.log(PST);
 		var lastTimeDiff;
 		var addTimeDiff;
-
-		// EST
-		// console.log(convertEST(formatDate + ' ' + formatTime).toLocaleString());
 
 		if (i === 0) {
 			var time = msToHMS(timeDiff);
