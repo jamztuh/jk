@@ -188,38 +188,129 @@ var getArticles = function(topRecentArticles) {
 	return Q.all(articles);
 };
 
+var convertEST = function (PST) {
+    offset = -4.0
+
+    var clientDate = new Date(PST);
+    utc = clientDate.getTime() + (clientDate.getTimezoneOffset() * 60000);
+
+    var serverDate = new Date(utc + (3600000*offset));
+
+    return serverDate;
+};
+
+function msToHMS(ms) {
+    // 1- Convert to seconds:
+    var seconds = ms / 1000;
+    // 2- Extract hours:
+    var hours = parseInt( seconds / 3600 ); // 3,600 seconds in 1 hour
+    seconds = seconds % 3600; // seconds remaining after extracting hours
+    // 3- Extract minutes:
+    var minutes = parseInt( seconds / 60 ); // 60 seconds in 1 minute
+    // 4- Keep only seconds not extracted to minutes:
+    seconds = Math.round(seconds % 60);
+    return {
+    	hours: hours,
+    	minutes: minutes,
+    	seconds: seconds
+    };
+};
+
+var finVizStats = function(articlesWithDatesAndLinks) {
+
+	var currentDate;
+	var currentTime;
+	var frequencyMap = {};
+	for (var i = 0; i < articlesWithDatesAndLinks.length; i++) {
+
+		var date = articlesWithDatesAndLinks[i].thirdSourceDate.split(' ')[0];
+		var time = articlesWithDatesAndLinks[i].thirdSourceDate.split(' ')[1];
+
+		var formatDate = date.split('-');
+		formatDate = formatDate[0] + '. ' + formatDate[1] + ', ' + '20' + formatDate[2];
+		var formatTime = time.substr(0, time.length-2) + ' ' + time.substr(-2) + ' ' + 'EDT';
+	
+		var PST = new Date(formatDate + ' ' + formatTime);
+
+		var today = new Date();
+		var timeDiff = today.getTime() - PST.getTime();
+		var lastTimeDiff;
+		var addTimeDiff;
+
+		// EST
+		// console.log(convertEST(formatDate + ' ' + formatTime).toLocaleString());
+
+		if (i === 0) {
+			var time = msToHMS(timeDiff);
+			console.log('Last post was ' + time.hours + ' hours, ' + time.minutes + ' minutes, and ' + time.seconds + ' seconds ago');
+
+			frequencyMap[date] = {};
+			frequencyMap[date]['posts'] = 1;
+			currentDate = date;
+			lastTimeDiff = timeDiff;
+			addTimeDiff = 0;
+
+		} else if (currentDate !== date) {
+
+			if (frequencyMap[currentDate]['posts'] > 1) {
+				frequencyMap[currentDate]['averageTime'] = msToHMS(addTimeDiff / frequencyMap[currentDate]['posts']);
+			};
+
+			frequencyMap[date] = {};
+			frequencyMap[date]['posts'] = 1;
+
+			currentDate = date;
+			lastTimeDiff = timeDiff;
+			addTimeDiff = 0;
+
+		} else {
+			frequencyMap[currentDate]['posts']++;
+			addTimeDiff += timeDiff - lastTimeDiff;
+		};
+	}
+	return frequencyMap;
+};
+
+
+
+
+
 var prinRecentArticles = function(sourceUrl, numberOfRecentLinks) {
+	var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
 	getArticlesWithDatesAndLinks(sourceUrl).then(function(articlesWithDatesAndLinks) {
 
-		// Split if there is a second parameter, otherwise keep all links
-		if (numberOfRecentLinks) {
-			articlesWithDatesAndLinks = articlesWithDatesAndLinks.splice(0, numberOfRecentLinks);
+		// get FinViz Frequency Stats
+		if (baseUrl === 'http://www.finviz.com/') {
+			console.log(finVizStats(articlesWithDatesAndLinks));
 		};
+		// Split if there is a second parameter, otherwise keep all links
+		// if (numberOfRecentLinks) {
+		// 	articlesWithDatesAndLinks = articlesWithDatesAndLinks.splice(0, numberOfRecentLinks);
+		// };
 
-		// console.log(articlesWithDatesAndLinks);
-		getArticles(articlesWithDatesAndLinks).then(function(recentArticles){
-			for(var i = 0; i < recentArticles.length; i++){
-				console.log('Link: ', recentArticles[i].link);
-				console.log('Third Source Date: ', recentArticles[i].thirdSourceDate);
-				console.log('Date: ', recentArticles[i].date);
-				console.log('Title: ', recentArticles[i].title);
-				// console.log('Raw Text: ', recentArticles[i].rawText);
-				console.log('Stat Sentences: ', recentArticles[i].statSentences);
-			};
-			console.log('Number of Articles Scraped: ', recentArticles.length);
-		});
+		// getArticles(articlesWithDatesAndLinks).then(function(recentArticles){
+		// 	for(var i = 0; i < recentArticles.length; i++){
+		// 		console.log('Link: ', recentArticles[i].link);
+		// 		console.log('Third Source Date: ', recentArticles[i].thirdSourceDate);
+		// 		console.log('Date: ', recentArticles[i].date);
+		// 		console.log('Title: ', recentArticles[i].title);
+		// 		// console.log('Raw Text: ', recentArticles[i].rawText);
+		// 		console.log('Stat Sentences: ', recentArticles[i].statSentences);
+		// 	};
+		// 	console.log('Number of Articles Scraped: ', recentArticles.length);
+		// });
 	});
 };
 
 // var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
 // var sourceUrl = "http://247wallst.com/";
-var sourceUrl = "https://www.thestreet.com/latest-news";
+// var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
-// var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
 // var sourceUrl = "http://www.businesswire.com/portal/site/home/news/";
 // var sourceUrl = "http://www.marketwatch.com/newsviewer";
 // var sourceUrl = "http://www.fool.com/investing-news/";
-prinRecentArticles(sourceUrl, 3);
+prinRecentArticles(sourceUrl);
 
 //get an array of sentences with stats for an article at specified URL
 // var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
