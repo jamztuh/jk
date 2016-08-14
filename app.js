@@ -230,10 +230,12 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 		formatDate = formatDate[0] + '. ' + formatDate[1] + ', ' + '20' + formatDate[2];
 		var formatTime = time.substr(0, time.length-2) + ' ' + time.substr(-2) + ' ' + 'EDT';
 	
-		var PST = new Date(formatDate + ' ' + formatTime);
+		var PST = new Date(new Date(formatDate + ' ' + formatTime).getTime() + 1000*60*60*3);
 
 		var today = new Date();
 		var timeDiff = today.getTime() - PST.getTime();
+		// console.log(today);
+		// console.log(PST);
 		var lastTimeDiff;
 		var addTimeDiff;
 
@@ -247,26 +249,26 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 			frequencyMap[date] = {};
 			frequencyMap[date]['posts'] = 1;
 			currentDate = date;
-			lastTimeDiff = timeDiff;
 			addTimeDiff = 0;
 
 		} else if (currentDate !== date) {
-
-			if (frequencyMap[currentDate]['posts'] > 1) {
-				frequencyMap[currentDate]['averageTime'] = msToHMS(addTimeDiff / frequencyMap[currentDate]['posts']);
-			};
 
 			frequencyMap[date] = {};
 			frequencyMap[date]['posts'] = 1;
 
 			currentDate = date;
-			lastTimeDiff = timeDiff;
+
 			addTimeDiff = 0;
 
 		} else {
 			frequencyMap[currentDate]['posts']++;
-			addTimeDiff += timeDiff - lastTimeDiff;
+			addTimeDiff = addTimeDiff + (timeDiff - lastTimeDiff);
+			if (frequencyMap[currentDate]['posts'] > 1) {
+				frequencyMap[currentDate]['averageTime'] = msToHMS(addTimeDiff / (frequencyMap[currentDate]['posts'] - 1));
+			};
+
 		};
+		lastTimeDiff = timeDiff;
 	}
 	return frequencyMap;
 };
@@ -279,14 +281,15 @@ var prinRecentArticles = function(sourceUrl, numberOfRecentLinks) {
 	var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
 	getArticlesWithDatesAndLinks(sourceUrl).then(function(articlesWithDatesAndLinks) {
 
+		// Split if there is a second parameter, otherwise keep all links
+		if (numberOfRecentLinks) {
+			articlesWithDatesAndLinks = articlesWithDatesAndLinks.splice(0, numberOfRecentLinks);
+		};
+
 		// get FinViz Frequency Stats
 		if (baseUrl === 'http://www.finviz.com/') {
 			console.log(finVizStats(articlesWithDatesAndLinks));
 		};
-		// Split if there is a second parameter, otherwise keep all links
-		// if (numberOfRecentLinks) {
-		// 	articlesWithDatesAndLinks = articlesWithDatesAndLinks.splice(0, numberOfRecentLinks);
-		// };
 
 		// getArticles(articlesWithDatesAndLinks).then(function(recentArticles){
 		// 	for(var i = 0; i < recentArticles.length; i++){
