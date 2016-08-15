@@ -462,7 +462,7 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 				};
 				for (var j = 0; j < stocks.length; j++) {
 					console.log('___________________ ' + (j + 1) + ' ___________________');
-					console.log('Symbol', stocks[j].symbol);
+					console.log('Symbol:', stocks[j].symbol);
 					console.log('Name:', stocks[j].name);
 					console.log('Current:', stocks[j].current);	
 					console.log('Change Price:', stocks[j].changePrice);
