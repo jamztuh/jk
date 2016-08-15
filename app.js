@@ -6,11 +6,11 @@ var Q = require("q");
 /* News Information */
 
 // Return array of objects with dates and links
-var getArticlesWithDatesAndLinks = function(source){
+var getArticlesWithDatesAndLinks = function(source, ticker){
 
 	var deferred = Q.defer();
 
-    request(source, function(err, res) {
+    request(source + ticker, function(err, res) {
     	var $ = cheerio.load(res.body);
 		var articlesWithDatesAndLinks = [];
 		var parentTarget;
@@ -86,6 +86,7 @@ var getArticlesWithDatesAndLinks = function(source){
 
     		var article = {};
 
+    		article.ticker = ticker;
     		article.link = link.trim();
     		article.thirdSourceDate = dateTime.trim();
 
@@ -232,14 +233,14 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 	
 		var PST = new Date(new Date(formatDate + ' ' + formatTime).getTime() + 1000*60*60*3);
 
-		var today = new Date();
+		var today = new Date((new Date()).getTime()  + 1000*60*60*3);
 		var timeDiff = today.getTime() - PST.getTime();
 		var lastTimeDiff;
 		var addTimeDiff;
 
 		if (i === 0) {
 			var time = msToHMS(Math.abs(timeDiff));
-			console.log('Last post was ' + time.hours + ' hours, ' + time.minutes + ' minutes, and ' + time.seconds + ' seconds ago');
+			console.log('Last post for ' + articlesWithDatesAndLinks[i].ticker + ' was ' + time.hours + ' hours, ' + time.minutes + ' minutes, and ' + time.seconds + ' seconds ago');
 
 			frequencyMap[date] = {};
 			frequencyMap[date]['posts'] = 1;
@@ -259,7 +260,7 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 			frequencyMap[currentDate]['posts']++;
 			addTimeDiff = addTimeDiff + (timeDiff - lastTimeDiff);
 			if (frequencyMap[currentDate]['posts'] > 1) {
-				frequencyMap[currentDate]['averageTime'] = msToHMS(addTimeDiff / (frequencyMap[currentDate]['posts'] - 1));
+				frequencyMap[currentDate]['avgTimePosts'] = msToHMS(addTimeDiff / (frequencyMap[currentDate]['posts'] - 1));
 			};
 
 		};
@@ -272,27 +273,23 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 
 
 
-var prinRecentArticles = function(sourceUrl, numberOfRecentLinks) {
+var printRecentArticles = function(sourceUrl, ticker) {
 	var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
-	getArticlesWithDatesAndLinks(sourceUrl).then(function(articlesWithDatesAndLinks) {
+	getArticlesWithDatesAndLinks(sourceUrl, ticker).then(function(articlesWithDatesAndLinks) {
 
-		// Split if there is a second parameter, otherwise keep all links
-		if (numberOfRecentLinks) {
-			articlesWithDatesAndLinks = articlesWithDatesAndLinks.splice(0, numberOfRecentLinks);
-		};
-
-		// get FinViz Frequency Stats
+		//get FinViz Frequency Stats
 		if (baseUrl === 'http://www.finviz.com/') {
 			console.log(finVizStats(articlesWithDatesAndLinks));
 		};
 
+		// console.log(articlesWithDatesAndLinks);
 		// getArticles(articlesWithDatesAndLinks).then(function(recentArticles){
 		// 	for(var i = 0; i < recentArticles.length; i++){
 		// 		console.log('Link: ', recentArticles[i].link);
 		// 		console.log('Third Source Date: ', recentArticles[i].thirdSourceDate);
 		// 		console.log('Date: ', recentArticles[i].date);
 		// 		console.log('Title: ', recentArticles[i].title);
-		// 		// console.log('Raw Text: ', recentArticles[i].rawText);
+		// 		console.log('Raw Text: ', recentArticles[i].rawText);
 		// 		console.log('Stat Sentences: ', recentArticles[i].statSentences);
 		// 	};
 		// 	console.log('Number of Articles Scraped: ', recentArticles.length);
@@ -304,11 +301,11 @@ var prinRecentArticles = function(sourceUrl, numberOfRecentLinks) {
 // var sourceUrl = "http://247wallst.com/";
 // var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
-var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "NVDA";
+var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
 // var sourceUrl = "http://www.businesswire.com/portal/site/home/news/";
 // var sourceUrl = "http://www.marketwatch.com/newsviewer";
 // var sourceUrl = "http://www.fool.com/investing-news/";
-prinRecentArticles(sourceUrl);
+//prinRecentArticles(sourceUrl);
 
 //get an array of sentences with stats for an article at specified URL
 // var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
@@ -433,22 +430,33 @@ var formatStocks = function(googleArray, yahooArray) {
 	return stocks;
 }
 
-var printStocks = function(stocksUrl) {
-	getTickers(stocksUrl).then(function(tickersArray) {
-		googleYahooRequests(tickersArray).then(function(googleYahooArray) {
+var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
+	getTickers(stockTwitsUrl, sourceUrl).then(function(tickersArray) {
 
-			var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
+		// Split if there is a second parameter, otherwise keep all links
+		if (numberOfTopTickers) {
+			tickersArray = tickersArray.splice(0, numberOfTopTickers);
+		};
 
-			formattedStocks.sort(function(a, b) {
-			    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
-			}).reverse();
+		for (var i = 0; i < tickersArray.length; i++) {
+			printRecentArticles(sourceUrl, tickersArray[i]);
+		};
 
-			console.log(formattedStocks);
-			console.log(formattedStocks.length);
-		});
+		// googleYahooRequests(tickersArray).then(function(googleYahooArray) {
+
+		// 	var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
+
+		// 	formattedStocks.sort(function(a, b) {
+		// 	    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
+		// 	}).reverse();
+
+		// 	console.log(formattedStocks);
+		// 	console.log(formattedStocks.length);
+		// });
 	});
 }
 
-var stocksUrl = "http://stocktwits.com/";
-// printStocks(stocksUrl);
+var stockTwitsUrl = "http://stocktwits.com/";
+var sourceUrl = "http://www.finviz.com/quote.ashx?t=";
+printStocks(stockTwitsUrl, sourceUrl, 3);
 
