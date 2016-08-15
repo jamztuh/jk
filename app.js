@@ -6,16 +6,20 @@ var Q = require("q");
 /* News Information */
 
 // Return array of objects with dates and links
-var getArticlesWithDatesAndLinks = function(source, ticker){
+var getArticlesWithDatesAndLinks = function(sourceUrl, ticker){
 
 	var deferred = Q.defer();
 
-    request(source + ticker, function(err, res) {
+	if (ticker !== undefined) {
+		sourceUrl = sourceUrl + ticker;
+	}
+
+    request(sourceUrl, function(err, res) {
     	var $ = cheerio.load(res.body);
 		var articlesWithDatesAndLinks = [];
 		var parentTarget;
 		var classTarget;
-		var baseUrl = source.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
+		var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
 
 		switch(baseUrl) {
 		    case 'http://finance.yahoo.com/':
@@ -269,34 +273,22 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 	return frequencyMap;
 };
 
-
-
-
-
 var printRecentArticles = function(sourceUrl, ticker) {
 	var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
-	var stock;
 	getArticlesWithDatesAndLinks(sourceUrl, ticker).then(function(articlesWithDatesAndLinks) {
 
-		//get FinViz Frequency Stats
-		if (baseUrl === 'http://www.finviz.com/') {
-			stock = finVizStats(articlesWithDatesAndLinks);
-			console.log(stock.lastPost);
-			console.log(Object.keys(stock['articles'])[0], stock['articles'][Object.keys(stock['articles'])[0]]);
-		};
-
 		// console.log(articlesWithDatesAndLinks);
-		// getArticles(articlesWithDatesAndLinks).then(function(recentArticles){
-		// 	for(var i = 0; i < recentArticles.length; i++){
-		// 		console.log('Link: ', recentArticles[i].link);
-		// 		console.log('Third Source Date: ', recentArticles[i].thirdSourceDate);
-		// 		console.log('Date: ', recentArticles[i].date);
-		// 		console.log('Title: ', recentArticles[i].title);
-		// 		console.log('Raw Text: ', recentArticles[i].rawText);
-		// 		console.log('Stat Sentences: ', recentArticles[i].statSentences);
-		// 	};
-		// 	console.log('Number of Articles Scraped: ', recentArticles.length);
-		// });
+		getArticles(articlesWithDatesAndLinks).then(function(recentArticles){
+			for(var i = 0; i < recentArticles.length; i++){
+				console.log('Link: ', recentArticles[i].link);
+				console.log('Third Source Date: ', recentArticles[i].thirdSourceDate);
+				console.log('Date: ', recentArticles[i].date);
+				console.log('Title: ', recentArticles[i].title);
+				// console.log('Raw Text: ', recentArticles[i].rawText);
+				// console.log('Stat Sentences: ', recentArticles[i].statSentences);
+			};
+			console.log('Number of Articles Scraped: ', recentArticles.length);
+		});
 	});
 };
 
@@ -304,11 +296,16 @@ var printRecentArticles = function(sourceUrl, ticker) {
 // var sourceUrl = "http://247wallst.com/";
 // var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
-var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+// var sourceUrl = "http://www.finviz.com/quote.ashx?t=";
 // var sourceUrl = "http://www.businesswire.com/portal/site/home/news/";
 // var sourceUrl = "http://www.marketwatch.com/newsviewer";
 // var sourceUrl = "http://www.fool.com/investing-news/";
-//prinRecentArticles(sourceUrl);
+
+// // For non-specific stock source
+// printRecentArticles(sourceUrl);
+
+// // For specific stock source
+// printRecentArticles(sourceUrl, 'KSS');
 
 //get an array of sentences with stats for an article at specified URL
 // var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
@@ -442,20 +439,30 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 		};
 
 		for (var i = 0; i < tickersArray.length; i++) {
-			printRecentArticles(sourceUrl, tickersArray[i]);
+			getArticlesWithDatesAndLinks(sourceUrl, tickersArray[i]).then(function(articlesWithDatesAndLinks) {
+
+				//get FinViz Frequency Stats
+				var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
+				if (baseUrl === 'http://www.finviz.com/') {
+					var stock = finVizStats(articlesWithDatesAndLinks);
+					console.log(stock.lastPost);
+					console.log(Object.keys(stock['articles'])[0], stock['articles'][Object.keys(stock['articles'])[0]]);
+				};
+			});
 		};
 
-		// googleYahooRequests(tickersArray).then(function(googleYahooArray) {
 
-		// 	var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
+		googleYahooRequests(tickersArray).then(function(googleYahooArray) {
 
-		// 	formattedStocks.sort(function(a, b) {
-		// 	    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
-		// 	}).reverse();
+			var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
 
-		// 	console.log(formattedStocks);
-		// 	console.log(formattedStocks.length);
-		// });
+			formattedStocks.sort(function(a, b) {
+			    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
+			}).reverse();
+
+			console.log(formattedStocks);
+			console.log(formattedStocks.length);
+		});
 	});
 }
 
