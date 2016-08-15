@@ -6,13 +6,15 @@ var Q = require("q");
 /* News Information */
 
 // Return array of objects with dates and links
-var getArticlesWithDatesAndLinks = function(sourceUrl, ticker){
+var getArticlesWithDatesAndLinks = function(sourceUrl, stock){
 
 	var deferred = Q.defer();
 
-	if (ticker !== undefined) {
-		sourceUrl = sourceUrl + ticker;
-	}
+	if (stock && (stock.symbol !== undefined)) {
+		sourceUrl = sourceUrl + stock.symbol;
+	} else {
+		stock = {};
+	};
 
     request(sourceUrl, function(err, res) {
     	var $ = cheerio.load(res.body);
@@ -89,8 +91,6 @@ var getArticlesWithDatesAndLinks = function(sourceUrl, ticker){
     		};
 
     		var article = {};
-
-    		article.ticker = ticker;
     		article.link = link.trim();
     		article.thirdSourceDate = dateTime.trim();
 
@@ -98,7 +98,8 @@ var getArticlesWithDatesAndLinks = function(sourceUrl, ticker){
 
 		});
 
-		deferred.resolve(articlesWithDatesAndLinks);
+    	stock.articles = articlesWithDatesAndLinks;
+		deferred.resolve(stock);
     });
     return deferred.promise;
 };
@@ -244,7 +245,7 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 
 		if (i === 0) {
 			var time = msToHMS(Math.abs(timeDiff));
-			frequencyMap.lastPost = articlesWithDatesAndLinks[i].ticker + ': Last post was ' + time.hours + ' hours, ' + time.minutes + ' minutes, and ' + time.seconds + ' seconds ago';
+			frequencyMap.lastPost = 'Last post was ' + time.hours + ' hours, ' + time.minutes + ' minutes, and ' + time.seconds + ' seconds ago';
 			frequencyMap['articles'] = {};
 			frequencyMap['articles'][date] = {};
 			frequencyMap['articles'][date]['posts'] = 1;
@@ -273,12 +274,11 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 	return frequencyMap;
 };
 
-var printRecentArticles = function(sourceUrl, ticker) {
+var printRecentArticles = function(sourceUrl, stock) {
 	var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
-	getArticlesWithDatesAndLinks(sourceUrl, ticker).then(function(articlesWithDatesAndLinks) {
-
+	getArticlesWithDatesAndLinks(sourceUrl, stock).then(function(articlesWithDatesAndLinks) {
 		// console.log(articlesWithDatesAndLinks);
-		getArticles(articlesWithDatesAndLinks).then(function(recentArticles){
+		getArticles(articlesWithDatesAndLinks.articles).then(function(recentArticles){
 			for(var i = 0; i < recentArticles.length; i++){
 				console.log('Link: ', recentArticles[i].link);
 				console.log('Third Source Date: ', recentArticles[i].thirdSourceDate);
@@ -294,9 +294,8 @@ var printRecentArticles = function(sourceUrl, ticker) {
 
 // var sourceUrl = "http://finance.yahoo.com/news/provider-ap/?bypass=true";
 // var sourceUrl = "http://247wallst.com/";
-// var sourceUrl = "https://www.thestreet.com/latest-news";
+//var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
-// var sourceUrl = "http://www.finviz.com/quote.ashx?t=";
 // var sourceUrl = "http://www.businesswire.com/portal/site/home/news/";
 // var sourceUrl = "http://www.marketwatch.com/newsviewer";
 // var sourceUrl = "http://www.fool.com/investing-news/";
@@ -305,7 +304,8 @@ var printRecentArticles = function(sourceUrl, ticker) {
 // printRecentArticles(sourceUrl);
 
 // // For specific stock source
-// printRecentArticles(sourceUrl, 'KSS');
+//var sourceUrl = "http://www.finviz.com/quote.ashx?t=";
+// printRecentArticles(sourceUrl, {'symbol': 'KSS'});
 
 //get an array of sentences with stats for an article at specified URL
 // var articleUrl = "http://finance.yahoo.com/news/nbcs-prime-time-olympics-due-change-221824505--spt.html";
@@ -430,6 +430,15 @@ var formatStocks = function(googleArray, yahooArray) {
 	return stocks;
 }
 
+var articlesRequest = function(sourceUrl, formattedStocks) {
+	var articlesRequest = [];
+	for (var i = 0; i < formattedStocks.length; i++) {
+		var article = getArticlesWithDatesAndLinks(sourceUrl, formattedStocks[i]);
+		articlesRequest.push(article);
+	}
+	return Q.all(articlesRequest);	
+}
+
 var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 	getTickers(stockTwitsUrl, sourceUrl).then(function(tickersArray) {
 
@@ -438,28 +447,31 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 			var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
 
 			// // Sort by change Percent
-			formattedStocks.sort(function(a, b) {
-			    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
-			}).reverse();
+			// formattedStocks = formattedStocks.sort(function(a, b) {
+			//     return parseFloat(a.changePercent) - parseFloat(b.changePercent);
+			// }).reverse();
 
 			// Split if there is a second parameter, otherwise keep all links
 			if (numberOfTopTickers) {
 				formattedStocks = formattedStocks.splice(0, numberOfTopTickers);
 			};
 
-			for (var i = 0; i < formattedStocks.length; i++) {
-				console.log(formattedStocks[i]);
-				getArticlesWithDatesAndLinks(sourceUrl, formattedStocks[i].symbol).then(function(articlesWithDatesAndLinks) {
-					//get FinViz Frequency Stats
-					var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
-					if (baseUrl === 'http://www.finviz.com/') {
-						var stock = finVizStats(articlesWithDatesAndLinks);
-						console.log(stock.lastPost);
-						console.log(Object.keys(stock['articles'])[0], stock['articles'][Object.keys(stock['articles'])[0]]);
-					};
-				});
-			};
-			console.log(formattedStocks.length);
+			articlesRequest(sourceUrl, formattedStocks).then(function(stocks) {
+				for (var i = 0; i < stocks.length; i++) {
+					stocks[i].stats = finVizStats(stocks[i].articles);
+				};
+				for (var j = 0; j < stocks.length; j++) {
+					console.log('___________________ ' + (j + 1) + ' ___________________');
+					console.log('Symbol', stocks[j].symbol);
+					console.log('Name:', stocks[j].name);
+					console.log('Current:', stocks[j].current);	
+					console.log('Change Price:', stocks[j].changePrice);
+					console.log('Change Percent:', stocks[j].changePercent + '%');
+					console.log('Average Daily Volume:', stocks[j].averageDailyVolume);
+					// console.log(JSON.stringify(stocks[j].stats, null, 4));
+				}
+				// console.log(JSON.stringify(stocks[0], null, 4));
+			});
 		});
 	});
 }
