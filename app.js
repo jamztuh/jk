@@ -240,27 +240,27 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 
 		if (i === 0) {
 			var time = msToHMS(Math.abs(timeDiff));
-			console.log('Last post for ' + articlesWithDatesAndLinks[i].ticker + ' was ' + time.hours + ' hours, ' + time.minutes + ' minutes, and ' + time.seconds + ' seconds ago');
-
-			frequencyMap[date] = {};
-			frequencyMap[date]['posts'] = 1;
+			frequencyMap.lastPost = articlesWithDatesAndLinks[i].ticker + ': Last post was ' + time.hours + ' hours, ' + time.minutes + ' minutes, and ' + time.seconds + ' seconds ago';
+			frequencyMap['articles'] = {};
+			frequencyMap['articles'][date] = {};
+			frequencyMap['articles'][date]['posts'] = 1;
 			currentDate = date;
 			addTimeDiff = 0;
 
 		} else if (currentDate !== date) {
 
-			frequencyMap[date] = {};
-			frequencyMap[date]['posts'] = 1;
+			frequencyMap['articles'][date] = {};
+			frequencyMap['articles'][date]['posts'] = 1;
 
 			currentDate = date;
 
 			addTimeDiff = 0;
 
 		} else {
-			frequencyMap[currentDate]['posts']++;
+			frequencyMap['articles'][currentDate]['posts']++;
 			addTimeDiff = addTimeDiff + (timeDiff - lastTimeDiff);
-			if (frequencyMap[currentDate]['posts'] > 1) {
-				frequencyMap[currentDate]['avgTimePosts'] = msToHMS(addTimeDiff / (frequencyMap[currentDate]['posts'] - 1));
+			if (frequencyMap['articles'][currentDate]['posts'] > 1) {
+				frequencyMap['articles'][currentDate]['avgTimePosts'] = msToHMS(addTimeDiff / (frequencyMap['articles'][currentDate]['posts'] - 1));
 			};
 
 		};
@@ -275,11 +275,14 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 
 var printRecentArticles = function(sourceUrl, ticker) {
 	var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
+	var stock;
 	getArticlesWithDatesAndLinks(sourceUrl, ticker).then(function(articlesWithDatesAndLinks) {
 
 		//get FinViz Frequency Stats
 		if (baseUrl === 'http://www.finviz.com/') {
-			console.log(finVizStats(articlesWithDatesAndLinks));
+			stock = finVizStats(articlesWithDatesAndLinks);
+			console.log(stock.lastPost);
+			console.log(Object.keys(stock['articles'])[0], stock['articles'][Object.keys(stock['articles'])[0]]);
 		};
 
 		// console.log(articlesWithDatesAndLinks);
