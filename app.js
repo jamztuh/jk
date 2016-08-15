@@ -238,7 +238,7 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 		var addTimeDiff;
 
 		if (i === 0) {
-			var time = msToHMS(timeDiff);
+			var time = msToHMS(Math.abs(timeDiff));
 			console.log('Last post was ' + time.hours + ' hours, ' + time.minutes + ' minutes, and ' + time.seconds + ' seconds ago');
 
 			frequencyMap[date] = {};
@@ -304,7 +304,7 @@ var prinRecentArticles = function(sourceUrl, numberOfRecentLinks) {
 // var sourceUrl = "http://247wallst.com/";
 // var sourceUrl = "https://www.thestreet.com/latest-news";
 // var sourceUrl = "http://stream.wsj.com/story/latest-headlines/SS-2-63399/";
-var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "KSS";
+var sourceUrl = "http://www.finviz.com/quote.ashx?t=" + "NVDA";
 // var sourceUrl = "http://www.businesswire.com/portal/site/home/news/";
 // var sourceUrl = "http://www.marketwatch.com/newsviewer";
 // var sourceUrl = "http://www.fool.com/investing-news/";
