@@ -433,34 +433,32 @@ var formatStocks = function(googleArray, yahooArray) {
 var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 	getTickers(stockTwitsUrl, sourceUrl).then(function(tickersArray) {
 
-		// Split if there is a second parameter, otherwise keep all links
-		if (numberOfTopTickers) {
-			tickersArray = tickersArray.splice(0, numberOfTopTickers);
-		};
-
-		for (var i = 0; i < tickersArray.length; i++) {
-			getArticlesWithDatesAndLinks(sourceUrl, tickersArray[i]).then(function(articlesWithDatesAndLinks) {
-
-				//get FinViz Frequency Stats
-				var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
-				if (baseUrl === 'http://www.finviz.com/') {
-					var stock = finVizStats(articlesWithDatesAndLinks);
-					console.log(stock.lastPost);
-					console.log(Object.keys(stock['articles'])[0], stock['articles'][Object.keys(stock['articles'])[0]]);
-				};
-			});
-		};
-
-
 		googleYahooRequests(tickersArray).then(function(googleYahooArray) {
 
 			var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
 
+			// // Sort by change Percent
 			formattedStocks.sort(function(a, b) {
 			    return parseFloat(a.changePercent) - parseFloat(b.changePercent);
 			}).reverse();
 
-			console.log(formattedStocks);
+			// Split if there is a second parameter, otherwise keep all links
+			if (numberOfTopTickers) {
+				formattedStocks = formattedStocks.splice(0, numberOfTopTickers);
+			};
+
+			for (var i = 0; i < formattedStocks.length; i++) {
+				console.log(formattedStocks[i]);
+				getArticlesWithDatesAndLinks(sourceUrl, formattedStocks[i].symbol).then(function(articlesWithDatesAndLinks) {
+					//get FinViz Frequency Stats
+					var baseUrl = sourceUrl.replace(/^((\w+:)?\/\/[^\/]+\/?).*$/,'$1');
+					if (baseUrl === 'http://www.finviz.com/') {
+						var stock = finVizStats(articlesWithDatesAndLinks);
+						console.log(stock.lastPost);
+						console.log(Object.keys(stock['articles'])[0], stock['articles'][Object.keys(stock['articles'])[0]]);
+					};
+				});
+			};
 			console.log(formattedStocks.length);
 		});
 	});
@@ -468,5 +466,5 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 var stockTwitsUrl = "http://stocktwits.com/";
 var sourceUrl = "http://www.finviz.com/quote.ashx?t=";
-printStocks(stockTwitsUrl, sourceUrl, 3);
+printStocks(stockTwitsUrl, sourceUrl);
 
