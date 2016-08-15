@@ -446,11 +446,6 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 			var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
 
-			// // Sort by change Percent
-			// formattedStocks = formattedStocks.sort(function(a, b) {
-			//     return parseFloat(a.changePercent) - parseFloat(b.changePercent);
-			// }).reverse();
-
 			// Split if there is a second parameter, otherwise keep all links
 			if (numberOfTopTickers) {
 				formattedStocks = formattedStocks.splice(0, numberOfTopTickers);
@@ -460,17 +455,28 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 				for (var i = 0; i < stocks.length; i++) {
 					stocks[i].stats = finVizStats(stocks[i].articles);
 				};
+
+				// // Sort by change Percent
+				// stocks = stocks.sort(function(a, b) {
+				//     return parseFloat(a.changePercent) - parseFloat(b.changePercent);
+				// }).reverse();
+
 				for (var j = 0; j < stocks.length; j++) {
-					console.log('___________________ ' + (j + 1) + ' ___________________');
+					console.log('___________________ (' + (j + 1) + ') ___________________');
 					console.log('Symbol:', stocks[j].symbol);
 					console.log('Name:', stocks[j].name);
 					console.log('Current:', stocks[j].current);	
 					console.log('Change Price:', stocks[j].changePrice);
 					console.log('Change Percent:', stocks[j].changePercent + '%');
 					console.log('Average Daily Volume:', stocks[j].averageDailyVolume);
+					console.log(stocks[j].stats.lastPost);
+					console.log("Today's Post Count:", stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]]['posts']);
+					if (stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]]['avgTimePosts']) {
+						console.log("Average Time Between Posts:", stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]]['avgTimePosts']);
+					}
+					console.log('Link:', sourceUrl + stocks[j].symbol);
 					// console.log(JSON.stringify(stocks[j].stats, null, 4));
 				}
-				// console.log(JSON.stringify(stocks[0], null, 4));
 			});
 		});
 	});
