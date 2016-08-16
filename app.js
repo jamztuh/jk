@@ -208,14 +208,18 @@ var convertEST = function (PST) {
 function msToHMS(ms) {
     // 1- Convert to seconds:
     var seconds = ms / 1000;
-    // 2- Extract hours:
+    // 2- Extract days:
+    var days = parseInt( seconds / 86400);
+    seconds = seconds % 86400; // seconds remaining after extracting days
+    // 3- Extract hours:
     var hours = parseInt( seconds / 3600 ); // 3,600 seconds in 1 hour
     seconds = seconds % 3600; // seconds remaining after extracting hours
-    // 3- Extract minutes:
+    // 4- Extract minutes:
     var minutes = parseInt( seconds / 60 ); // 60 seconds in 1 minute
-    // 4- Keep only seconds not extracted to minutes:
+    // 5- Keep only seconds not extracted to minutes:
     seconds = Math.round(seconds % 60);
     return {
+    	days: days,
     	hours: hours,
     	minutes: minutes,
     	seconds: seconds
@@ -245,7 +249,7 @@ var finVizStats = function(articlesWithDatesAndLinks) {
 
 		if (i === 0) {
 			var time = msToHMS(Math.abs(timeDiff));
-			frequencyMap.lastPost = 'Last post was ' + time.hours + ' hours, ' + time.minutes + ' minutes, and ' + time.seconds + ' seconds ago';
+			frequencyMap.lastPost = time;
 			frequencyMap['articles'] = {};
 			frequencyMap['articles'][date] = {};
 			frequencyMap['articles'][date]['posts'] = 1;
@@ -358,9 +362,13 @@ var googleYahooRequests = function(tickersArray) {
 
 var formatStocks = function(googleArray, yahooArray) {
     var googleFinance = JSON.parse(googleArray.substring(3, googleArray.length));
-    var yahooFinance = JSON.parse(yahooArray).query.results.quote;
+	if (JSON.parse(yahooArray).query.results.quote.length) {
+		var yahooFinance = JSON.parse(yahooArray).query.results.quote;
+	} else {
+		var yahooFinance = [];
+		yahooFinance.push(JSON.parse(yahooArray).query.results.quote);
+	};
     var stocks = [];
-    // console.log(googleFinance.length, yahooFinance.length);
     for(var i = 0; i < yahooFinance.length; i++){
     	var yahooSymbol = yahooFinance[i].Symbol;
     	for(var j = 0; j < googleFinance.length; j++){
@@ -442,6 +450,9 @@ var articlesRequest = function(sourceUrl, formattedStocks) {
 var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 	getTickers(stockTwitsUrl, sourceUrl).then(function(tickersArray) {
 
+		// // Custom Tickers
+		// tickersArray = [ 'TWTR' , 'TWLO']
+
 		googleYahooRequests(tickersArray).then(function(googleYahooArray) {
 
 			var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
@@ -450,31 +461,67 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 			if (numberOfTopTickers) {
 				formattedStocks = formattedStocks.splice(0, numberOfTopTickers);
 			};
-
 			articlesRequest(sourceUrl, formattedStocks).then(function(stocks) {
 				for (var i = 0; i < stocks.length; i++) {
 					stocks[i].stats = finVizStats(stocks[i].articles);
 				};
 
-				// // Sort by change Percent
-				// stocks = stocks.sort(function(a, b) {
-				//     return parseFloat(a.changePercent) - parseFloat(b.changePercent);
-				// }).reverse();
+				stocks.sort(function(a, b) {
+
+				    // Sort by days
+				    var sortDays = parseFloat(a.stats.lastPost.days) - parseFloat(b.stats.lastPost.days);
+				    if(sortDays) return sortDays;
+
+				    // If there is a tie, sort by hours
+				    var sortHours = parseFloat(a.stats.lastPost.hours) - parseFloat(b.stats.lastPost.hours);
+				    if (sortHours) return sortHours;
+
+				    // If there is a tie, sort by minutes
+				    var sortMinutes = parseFloat(a.stats.lastPost.minutes) - parseFloat(b.stats.lastPost.minutes);
+				    if (sortMinutes) return sortMinutes;
+
+				    // If there is a tie, sort by seconds
+				    var sortSeconds = parseFloat(a.stats.lastPost.seconds) - parseFloat(b.stats.lastPost.seconds);
+				    return sortSeconds;
+
+				});
+
 
 				for (var j = 0; j < stocks.length; j++) {
 					console.log('___________________ (' + (j + 1) + ') ___________________');
-					console.log('Symbol:', stocks[j].symbol);
+					console.log('Link:', sourceUrl + stocks[j].symbol);
+					console.log('Symbol:', (stocks[j].symbol));
 					console.log('Name:', stocks[j].name);
 					console.log('Current:', stocks[j].current);	
 					console.log('Change Price:', stocks[j].changePrice);
 					console.log('Change Percent:', stocks[j].changePercent + '%');
 					console.log('Average Daily Volume:', stocks[j].averageDailyVolume);
-					console.log(stocks[j].stats.lastPost);
-					console.log("Today's Post Count:", stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]]['posts']);
-					if (stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]]['avgTimePosts']) {
-						console.log("Average Time Between Posts:", stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]]['avgTimePosts']);
-					}
-					console.log('Link:', sourceUrl + stocks[j].symbol);
+
+					var lastNewsPost = stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]];
+
+					var days = stocks[j].stats.lastPost.days;
+
+					if (days === 0) {
+						days = 'today';
+					} else {
+						days = days + ' days';
+					};
+
+					console.log('Last post was ' + days + ', ' + stocks[j].stats.lastPost.hours + ' hours, ' + stocks[j].stats.lastPost.minutes + ' minutes, and ' + stocks[j].stats.lastPost.seconds + ' seconds ago');
+
+					console.log("Post count for that day:", lastNewsPost.posts);
+
+					if (lastNewsPost.avgTimePosts) {
+						console.log("Average Time Between Posts:", lastNewsPost.avgTimePosts);
+					};
+
+					if ((lastNewsPost.posts <= 1)) {
+						console.log('Spotlight:', 'People');
+					} else if ((lastNewsPost.avgTimePosts.hours <= 1) && ((stocks[j].stats.lastPost.days === 0) && (lastNewsPost.posts > 1))) {
+						console.log('Spotlight:', 'News');
+					} else {
+						console.log('Spotlight:', 'People');
+					};
 					// console.log(JSON.stringify(stocks[j].stats, null, 4));
 				}
 			});
