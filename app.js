@@ -499,15 +499,14 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 					var lastNewsPost = stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]];
 
+					var days = stocks[j].stats.lastPost.days + ' days';
 					if (stocks[j].stats.lastPost.days === 0) {
-						var isToday = (new Date((new Date()).getTime()  + 1000*60*60*3)) - (new Date((new Date()).getTime()  + 1000*60*60*3 - 1000*60*60* stocks[j].stats.lastPost.hours));
-						if (isToday === 0) {
-							var days = 'today (EST)'
+						var isToday = ((new Date((new Date()).getTime()  + 1000*60*60*3)) - (new Date((new Date()).getTime()  + 1000*60*60*3 - 1000*60*60* stocks[j].stats.lastPost.hours))) === 0;
+						if (isToday) {
+							days = 'today (EST)'
 						} else {
-							var days = 'yesterday'
+							days = 'yesterday'
 						}
-					} else {
-						var days = stocks[j].stats.lastPost.days + ' days';
 					};
 
 					console.log('Last post was ' + days + ', ' + stocks[j].stats.lastPost.hours + ' hours, ' + stocks[j].stats.lastPost.minutes + ' minutes, and ' + stocks[j].stats.lastPost.seconds + ' seconds ago');
