@@ -62,7 +62,6 @@ var getArticlesWithDatesAndLinks = function(sourceUrl, stock){
 		    case 'http://www.fool.com/':
 		    	parentTarget = 'div.list-content div.comment';
 		    	dateTimeTarget = "p.author-byline";
-		        linkTarget = '.nv-text-cont h4 a.read-more';
 		        linkTarget = 'div.comment-content a#recent-article-hl';
 		        break;
 		};
@@ -79,6 +78,8 @@ var getArticlesWithDatesAndLinks = function(sourceUrl, stock){
     			link = baseUrl.substring(0, baseUrl.length - 1) + link;
     		};
 
+    		var title = $(element).find(linkTarget).text();
+
     		var dateTime = $(element).find(dateTimeTarget).text();
 
     		if (baseUrl === 'http://www.finviz.com/') {
@@ -92,6 +93,7 @@ var getArticlesWithDatesAndLinks = function(sourceUrl, stock){
 
     		var article = {};
     		article.link = link.trim();
+    		article.thirdSourceTitle = title.trim();
     		article.thirdSourceDate = dateTime.trim();
 
 			articlesWithDatesAndLinks.push(article);
@@ -513,6 +515,7 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 					console.log("Post count for that day:", lastNewsPost.posts);
 
+
 					if (lastNewsPost.avgTimePosts) {
 						console.log("Average Time Between Posts:", lastNewsPost.avgTimePosts);
 					};
@@ -524,7 +527,12 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 					} else {
 						console.log('Spotlight:', 'People');
 					};
-					// console.log(JSON.stringify(stocks[j].stats, null, 4));
+
+					var lastArticles = 1;
+					for (var k = 0; k < ((stocks[j].articles.length) - (stocks[j].articles.length - lastArticles)); k++) {
+						console.log('Article Title:', stocks[j].articles[k].thirdSourceTitle);
+						console.log('Article Link:', stocks[j].articles[k].link);
+					};
 				}
 			});
 		});
@@ -533,5 +541,5 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 var stockTwitsUrl = "http://stocktwits.com/";
 var sourceUrl = "http://www.finviz.com/quote.ashx?t=";
-printStocks(stockTwitsUrl, sourceUrl, 3);
+printStocks(stockTwitsUrl, sourceUrl);
 
