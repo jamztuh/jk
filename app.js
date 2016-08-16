@@ -509,7 +509,7 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 						}
 					};
 
-					console.log('Last post was ' + days + ', ' + stocks[j].stats.lastPost.hours + ' hours, ' + stocks[j].stats.lastPost.minutes + ' minutes, and ' + stocks[j].stats.lastPost.seconds + ' seconds ago');
+					console.log('Last post was', days + ',', stocks[j].stats.lastPost.hours, 'hours,', stocks[j].stats.lastPost.minutes, 'minutes,', 'and', stocks[j].stats.lastPost.seconds, 'seconds ago');
 
 					console.log("Post count for that day:", lastNewsPost.posts);
 
