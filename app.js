@@ -499,12 +499,15 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 					var lastNewsPost = stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]];
 
-					var days = stocks[j].stats.lastPost.days;
-
-					if (days === 0) {
-						days = 'today';
+					if (stocks[j].stats.lastPost.days === 0) {
+						var isToday = (new Date((new Date()).getTime()  + 1000*60*60*3)) - (new Date((new Date()).getTime()  + 1000*60*60*3 - 1000*60*60* stocks[j].stats.lastPost.hours));
+						if (isToday === 0) {
+							var days = 'today (EST)'
+						} else {
+							var days = 'yesterday'
+						}
 					} else {
-						days = days + ' days';
+						var days = stocks[j].stats.lastPost.days + ' days';
 					};
 
 					console.log('Last post was ' + days + ', ' + stocks[j].stats.lastPost.hours + ' hours, ' + stocks[j].stats.lastPost.minutes + ' minutes, and ' + stocks[j].stats.lastPost.seconds + ' seconds ago');
@@ -531,5 +534,5 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 var stockTwitsUrl = "http://stocktwits.com/";
 var sourceUrl = "http://www.finviz.com/quote.ashx?t=";
-printStocks(stockTwitsUrl, sourceUrl);
+printStocks(stockTwitsUrl, sourceUrl, 3);
 
