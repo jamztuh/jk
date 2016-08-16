@@ -528,10 +528,9 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 						console.log('Spotlight:', 'People');
 					};
 
-					var lastArticles = 1;
+					var lastArticles = 3;
 					for (var k = 0; k < ((stocks[j].articles.length) - (stocks[j].articles.length - lastArticles)); k++) {
-						console.log('Article Title:', stocks[j].articles[k].thirdSourceTitle);
-						console.log('Article Link:', stocks[j].articles[k].link);
+						console.log(stocks[j].articles[k].thirdSourceDate, stocks[j].articles[k].thirdSourceTitle);
 					};
 				}
 			});
