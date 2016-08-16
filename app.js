@@ -491,9 +491,7 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 				for (var j = 0; j < stocks.length; j++) {
 					console.log('___________________ (' + (j + 1) + ') ___________________');
-					console.log('Link:', sourceUrl + stocks[j].symbol);
-					console.log('Symbol:', (stocks[j].symbol));
-					console.log('Name:', stocks[j].name);
+					console.log(stocks[j].symbol + ':',stocks[j].name);
 					console.log('Current:', stocks[j].current);	
 					console.log('Change Price:', stocks[j].changePrice);
 					console.log('Change Percent:', stocks[j].changePercent + '%');
@@ -511,10 +509,8 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 						}
 					};
 
-					console.log('Last post was', days + ',', stocks[j].stats.lastPost.hours, 'hours,', stocks[j].stats.lastPost.minutes, 'minutes,', 'and', stocks[j].stats.lastPost.seconds, 'seconds ago');
-
+					console.log('Last post was', days + ',', stocks[j].stats.lastPost.hours, 'hours,', stocks[j].stats.lastPost.minutes, 'minutes,', 'and', stocks[j].stats.lastPost.seconds, 'seconds ago:', lastNewsPost.posts);
 					console.log("Post count for that day:", lastNewsPost.posts);
-
 
 					if (lastNewsPost.avgTimePosts) {
 						console.log("Average Time Between Posts:", lastNewsPost.avgTimePosts);
@@ -528,9 +524,12 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 						console.log('Spotlight:', 'People');
 					};
 
+					console.log('Google:', 'https://www.google.com/#q=' + stocks[j].symbol + '+stock');
+					console.log('FinViz:', sourceUrl + stocks[j].symbol);
+
 					var lastArticles = 3;
 					for (var k = 0; k < ((stocks[j].articles.length) - (stocks[j].articles.length - lastArticles)); k++) {
-						console.log(stocks[j].articles[k].thirdSourceDate, stocks[j].articles[k].thirdSourceTitle);
+						console.log(stocks[j].articles[k].thirdSourceDate + ':', stocks[j].articles[k].thirdSourceTitle);
 					};
 				}
 			});
