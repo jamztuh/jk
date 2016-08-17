@@ -460,7 +460,7 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 			var formattedStocks = formatStocks(googleYahooArray[0], googleYahooArray[1]);
 
 			// Split if there is a second parameter, otherwise keep all links
-			if (numberOfTopTickers) {
+			if (numberOfTopTickers && (formattedStocks.length > numberOfTopTickers)) {
 				formattedStocks = formattedStocks.splice(0, numberOfTopTickers);
 			};
 			articlesRequest(sourceUrl, formattedStocks).then(function(stocks) {
@@ -539,5 +539,5 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 var stockTwitsUrl = "http://stocktwits.com/";
 var sourceUrl = "http://www.finviz.com/quote.ashx?t=";
-printStocks(stockTwitsUrl, sourceUrl);
+printStocks(stockTwitsUrl, sourceUrl, 15);
 
