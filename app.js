@@ -463,31 +463,32 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 			if (numberOfTopTickers && (formattedStocks.length > numberOfTopTickers)) {
 				formattedStocks = formattedStocks.splice(0, numberOfTopTickers);
 			};
+
 			articlesRequest(sourceUrl, formattedStocks).then(function(stocks) {
 				for (var i = 0; i < stocks.length; i++) {
 					stocks[i].stats = finVizStats(stocks[i].articles);
 				};
 
-				stocks.sort(function(a, b) {
+				console.log(stocks);
+				// stocks.sort(function(a, b) {
 
-				    // Sort by days
-				    var sortDays = parseFloat(a.stats.lastPost.days) - parseFloat(b.stats.lastPost.days);
-				    if(sortDays) return sortDays;
+				//     // Sort by days
+				//     var sortDays = parseFloat(a.stats.lastPost.days) - parseFloat(b.stats.lastPost.days);
+				//     if(sortDays) return sortDays;
 
-				    // If there is a tie, sort by hours
-				    var sortHours = parseFloat(a.stats.lastPost.hours) - parseFloat(b.stats.lastPost.hours);
-				    if (sortHours) return sortHours;
+				//     // If there is a tie, sort by hours
+				//     var sortHours = parseFloat(a.stats.lastPost.hours) - parseFloat(b.stats.lastPost.hours);
+				//     if (sortHours) return sortHours;
 
-				    // If there is a tie, sort by minutes
-				    var sortMinutes = parseFloat(a.stats.lastPost.minutes) - parseFloat(b.stats.lastPost.minutes);
-				    if (sortMinutes) return sortMinutes;
+				//     // If there is a tie, sort by minutes
+				//     var sortMinutes = parseFloat(a.stats.lastPost.minutes) - parseFloat(b.stats.lastPost.minutes);
+				//     if (sortMinutes) return sortMinutes;
 
-				    // If there is a tie, sort by seconds
-				    var sortSeconds = parseFloat(a.stats.lastPost.seconds) - parseFloat(b.stats.lastPost.seconds);
-				    return sortSeconds;
+				//     // If there is a tie, sort by seconds
+				//     var sortSeconds = parseFloat(a.stats.lastPost.seconds) - parseFloat(b.stats.lastPost.seconds);
+				//     return sortSeconds;
 
-				});
-
+				// });
 
 				for (var j = 0; j < stocks.length; j++) {
 					console.log('___________________ (' + (j + 1) + ') ___________________');
@@ -497,40 +498,44 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 					console.log('Change Percent:', stocks[j].changePercent + '%');
 					console.log('Average Daily Volume:', stocks[j].averageDailyVolume);
 
-					var lastNewsPost = stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]];
+					if (stocks[j].stats.articles) {
+						var lastNewsPost = stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]];
 
-					var days = stocks[j].stats.lastPost.days + ' days';
-					if (stocks[j].stats.lastPost.days === 0) {
-						var isToday = ((new Date((new Date()).getTime()  + 1000*60*60*3)) - (new Date((new Date()).getTime()  + 1000*60*60*3 - 1000*60*60* stocks[j].stats.lastPost.hours))) === 0;
-						if (isToday) {
-							days = 'today (EST)'
+						var days = stocks[j].stats.lastPost.days + ' days';
+						if (stocks[j].stats.lastPost.days === 0) {
+							var isToday = ((new Date((new Date()).getTime()  + 1000*60*60*3)) - (new Date((new Date()).getTime()  + 1000*60*60*3 - 1000*60*60* stocks[j].stats.lastPost.hours))) === 0;
+							if (isToday) {
+								days = 'today (EST)'
+							} else {
+								days = 'yesterday'
+							}
+						};
+
+						console.log('Last post was', days + ',', stocks[j].stats.lastPost.hours, 'hours,', stocks[j].stats.lastPost.minutes, 'minutes,', 'and', stocks[j].stats.lastPost.seconds, 'seconds ago:', lastNewsPost.posts);
+						console.log("Post count for that day:", lastNewsPost.posts);
+
+						if (lastNewsPost.avgTimePosts) {
+							console.log("Average Time Between Posts:", lastNewsPost.avgTimePosts);
+						};
+
+						if ((lastNewsPost.posts <= 1)) {
+							console.log('Spotlight:', 'People');
+						} else if ((lastNewsPost.avgTimePosts.hours <= 1) && ((stocks[j].stats.lastPost.days === 0) && (lastNewsPost.posts > 1))) {
+							console.log('Spotlight:', 'News');
 						} else {
-							days = 'yesterday'
-						}
-					};
+							console.log('Spotlight:', 'People');
+						};
 
-					console.log('Last post was', days + ',', stocks[j].stats.lastPost.hours, 'hours,', stocks[j].stats.lastPost.minutes, 'minutes,', 'and', stocks[j].stats.lastPost.seconds, 'seconds ago:', lastNewsPost.posts);
-					console.log("Post count for that day:", lastNewsPost.posts);
+						var lastArticles = 3;
+						for (var k = 0; k < ((stocks[j].articles.length) - (stocks[j].articles.length - lastArticles)); k++) {
+							console.log(stocks[j].articles[k].thirdSourceDate + ':', stocks[j].articles[k].thirdSourceTitle);
+						};
 
-					if (lastNewsPost.avgTimePosts) {
-						console.log("Average Time Between Posts:", lastNewsPost.avgTimePosts);
-					};
-
-					if ((lastNewsPost.posts <= 1)) {
-						console.log('Spotlight:', 'People');
-					} else if ((lastNewsPost.avgTimePosts.hours <= 1) && ((stocks[j].stats.lastPost.days === 0) && (lastNewsPost.posts > 1))) {
-						console.log('Spotlight:', 'News');
-					} else {
-						console.log('Spotlight:', 'People');
 					};
 
 					console.log('Google:', 'https://www.google.com/#q=' + stocks[j].symbol + '+stock');
 					console.log('FinViz:', sourceUrl + stocks[j].symbol);
 
-					var lastArticles = 3;
-					for (var k = 0; k < ((stocks[j].articles.length) - (stocks[j].articles.length - lastArticles)); k++) {
-						console.log(stocks[j].articles[k].thirdSourceDate + ':', stocks[j].articles[k].thirdSourceTitle);
-					};
 				}
 			});
 		});
@@ -539,5 +544,5 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 
 var stockTwitsUrl = "http://stocktwits.com/";
 var sourceUrl = "http://www.finviz.com/quote.ashx?t=";
-printStocks(stockTwitsUrl, sourceUrl, 15);
+printStocks(stockTwitsUrl, sourceUrl);
 
