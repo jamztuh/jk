@@ -465,29 +465,38 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 			};
 
 			articlesRequest(sourceUrl, formattedStocks).then(function(stocks) {
+
+
+				var hasArticles = false;
 				for (var i = 0; i < stocks.length; i++) {
-					stocks[i].stats = finVizStats(stocks[i].articles);
+					if (stocks[i].articles.length > 0) {
+						stocks[i].stats = finVizStats(stocks[i].articles);
+						hasArticles = true;
+					};
 				};
 
-				stocks.sort(function(a, b) {
+				if (hasArticles === true) {
+					stocks.sort(function(a, b) {
 
-				    // Sort by days
-				    var sortDays = parseFloat(a.stats.lastPost.days) - parseFloat(b.stats.lastPost.days);
-				    if(sortDays) return sortDays;
+					    // Sort by days
+					    var sortDays = parseFloat(a.stats.lastPost.days) - parseFloat(b.stats.lastPost.days);
+					    if(sortDays) return sortDays;
 
-				    // If there is a tie, sort by hours
-				    var sortHours = parseFloat(a.stats.lastPost.hours) - parseFloat(b.stats.lastPost.hours);
-				    if (sortHours) return sortHours;
+					    // If there is a tie, sort by hours
+					    var sortHours = parseFloat(a.stats.lastPost.hours) - parseFloat(b.stats.lastPost.hours);
+					    if (sortHours) return sortHours;
 
-				    // If there is a tie, sort by minutes
-				    var sortMinutes = parseFloat(a.stats.lastPost.minutes) - parseFloat(b.stats.lastPost.minutes);
-				    if (sortMinutes) return sortMinutes;
+					    // If there is a tie, sort by minutes
+					    var sortMinutes = parseFloat(a.stats.lastPost.minutes) - parseFloat(b.stats.lastPost.minutes);
+					    if (sortMinutes) return sortMinutes;
 
-				    // If there is a tie, sort by seconds
-				    var sortSeconds = parseFloat(a.stats.lastPost.seconds) - parseFloat(b.stats.lastPost.seconds);
-				    return sortSeconds;
+					    // If there is a tie, sort by seconds
+					    var sortSeconds = parseFloat(a.stats.lastPost.seconds) - parseFloat(b.stats.lastPost.seconds);
+					    return sortSeconds;
 
-				});
+					});
+				};
+
 
 				for (var j = 0; j < stocks.length; j++) {
 					console.log('___________________ (' + (j + 1) + ') ___________________');
@@ -497,7 +506,7 @@ var printStocks = function(stockTwitsUrl, sourceUrl, numberOfTopTickers) {
 					console.log('Change Percent:', stocks[j].changePercent + '%');
 					console.log('Average Daily Volume:', stocks[j].averageDailyVolume);
 
-					if (stocks[j].stats.articles) {
+					if (hasArticles === true) {
 						var lastNewsPost = stocks[j].stats.articles[Object.keys(stocks[j].stats.articles)[0]];
 
 						var days = stocks[j].stats.lastPost.days + ' days';
